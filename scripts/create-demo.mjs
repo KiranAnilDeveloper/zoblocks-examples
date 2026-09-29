@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { CLI_COMPONENTS, NPM_COMPONENTS } from "./components.mjs";
-import { REPO, ROOT, demosTableRow, stackblitzUrl, toTitle } from "./demos.mjs";
+import { REPO, ROOT, codesandboxUrl, demosTableRow, stackblitzUrl, toTitle } from "./demos.mjs";
 
 const TEMPLATE_DIR = path.join(ROOT, "templates", "react-vite");
 // Overridable so tests can generate into a temporary folder.
@@ -118,8 +118,9 @@ console.log(
     "Add this row to the table in DEMOS.md (required before you can commit the demo):",
     demosTableRow(name),
     "",
-    "Open in StackBlitz (once pushed to main):",
-    stackblitzUrl(name),
+    "Open online (once pushed to main):",
+    `StackBlitz:  ${stackblitzUrl(name)}`,
+    `CodeSandbox: ${codesandboxUrl(name)}`,
     "",
   ].join("\n"),
 );

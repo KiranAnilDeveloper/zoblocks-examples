@@ -50,6 +50,22 @@ test("adds StackBlitz config and an Open in StackBlitz link", () => {
   assert.equal(JSON.parse(read("date-picker", ".stackblitzrc")).startCommand, "npm run dev");
 });
 
+test("adds CodeSandbox config and an Open in CodeSandbox link", () => {
+  const url =
+    "https://codesandbox.io/p/devbox/github/md-nabas-pm/zoblocks-examples/tree/main/demos/date-picker";
+
+  const result = createDemo("date-picker");
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(read("date-picker", "README.md").includes(`(${url})`));
+  assert.ok(result.stdout.includes(url));
+  const tasks = JSON.parse(read("date-picker", ".codesandbox", "tasks.json"));
+  assert.equal(tasks.tasks.dev.command, "npm run dev");
+  assert.equal(tasks.tasks.dev.preview.port, 5173);
+  assert.ok(JSON.parse(read("date-picker", ".devcontainer", "devcontainer.json")).image);
+  assert.match(read("date-picker", "vite.config.ts"), /allowedHosts: \[".csb.app"\]/);
+});
+
 test("leaves no unreplaced placeholders", () => {
   createDemo("date-picker");
 

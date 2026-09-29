@@ -6,7 +6,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { ROOT, demosTableRow, findDemoProblems, stackblitzUrl } from "./demos.mjs";
+import { ROOT, demosTableRow, findDemoProblems, stackblitzButton } from "./demos.mjs";
 
 const color = (code) => (text) => (process.stdout.isTTY ? `\x1b[${code}m${text}\x1b[0m` : text);
 const red = color(31);
@@ -55,7 +55,7 @@ const lines = [
   "",
   red(bold(`✗ DEMOS.md is missing information about a demo.`)),
   "",
-  'Every demo must be listed in DEMOS.md with an "Open in StackBlitz" link.',
+  'Every demo must be listed in DEMOS.md with an "Open in StackBlitz" button.',
 ];
 
 for (const { name, reason } of problems) {
@@ -70,9 +70,9 @@ for (const { name, reason } of problems) {
   } else {
     lines.push(
       bold(`• demos/${name} is listed, but its StackBlitz link is missing or wrong.`),
-      '  The "Open online" column must contain:',
+      '  The "Open online" column must contain this StackBlitz button:',
       "",
-      `  [Open in StackBlitz](${stackblitzUrl(name)})`,
+      `  ${stackblitzButton(name)}`,
     );
   }
 }

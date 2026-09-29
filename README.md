@@ -12,7 +12,7 @@ Small example apps (called **demos**) that show how to use [ZoBlocks](https://zo
 
 Each demo opens in StackBlitz, which installs everything and starts the app for you in about 30 seconds. For example:
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/breath-loader?file=src/App.tsx) Breath Loader
+[![Open in StackBlitz](https://img.shields.io/badge/StackBlitz-Open-1389FD?style=for-the-badge&logo=stackblitz&logoColor=white)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/breath-loader?file=src/App.tsx) Breath Loader
 
 StackBlitz reads the code straight from this GitHub repository, so it always shows the latest version on `main`. CodeSandbox and JSFiddle links are coming later.
 

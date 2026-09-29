@@ -22,9 +22,21 @@ export const toTitle = (name) =>
 export const stackblitzUrl = (name) =>
   `https://stackblitz.com/github/${REPO}/tree/main/demos/${name}?file=src/App.tsx`;
 
+// Button-style badge image from shields.io, e.g. "[logo] STACKBLITZ | OPEN".
+const badge = (platform, message, color, logo) =>
+  `https://img.shields.io/badge/${platform}-${message}-${color}?style=for-the-badge&logo=${logo}&logoColor=white`;
+
+// Active button: a badge image wrapped in a link.
+export const stackblitzButton = (name) =>
+  `[![Open in StackBlitz](${badge("StackBlitz", "Open", "1389FD", "stackblitz")})](${stackblitzUrl(name)})`;
+
+// Disabled button: a grey badge image with no link.
+const comingSoonButton = (platform, logo) =>
+  `![${platform} coming soon](${badge(platform, "Coming_soon", "lightgrey", logo)})`;
+
 // The row a demo needs in DEMOS.md. CodeSandbox and JSFiddle aren't supported yet.
 export const demosTableRow = (name) =>
-  `| ${toTitle(name)} | [Open in StackBlitz](${stackblitzUrl(name)}) · CodeSandbox — Coming soon · JSFiddle — Coming soon |`;
+  `| ${toTitle(name)} | ${stackblitzButton(name)} ${comingSoonButton("CodeSandbox", "codesandbox")} ${comingSoonButton("JSFiddle", "jsfiddle")} |`;
 
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -63,9 +75,9 @@ export function findDemoProblems(markdown, names) {
       problems.push({ name, reason: "missing" });
       continue;
     }
-    // The StackBlitz link must open this demo from main; any "?file=..." is fine.
+    // A link (text or button) must open this demo in StackBlitz from main; any "?file=..." is fine.
     const link = new RegExp(
-      `\\[Open in StackBlitz\\]\\(${escapeRegExp(`https://stackblitz.com/github/${REPO}/tree/main${demoPath}`)}[?)]`,
+      `\\]\\(${escapeRegExp(`https://stackblitz.com/github/${REPO}/tree/main${demoPath}`)}[?)]`,
     );
     if (!link.test(row[1] ?? "")) problems.push({ name, reason: "no-stackblitz" });
   }

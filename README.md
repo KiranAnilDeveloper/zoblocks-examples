@@ -1,60 +1,103 @@
 # ZoBlocks Examples
 
-Standalone React + Vite demos for [ZoBlocks](https://zoblocks.design) components. Each demo in `demos/<name>` is its own app with its own `package.json`.
+Small example apps (called **demos**) that show how to use [ZoBlocks](https://zoblocks.design) components.
 
-Requires Node.js 20.19+.
+- Each demo lives in its own folder under `demos/`, for example `demos/breath-loader`.
+- Each demo is a complete [React](https://react.dev) app built with [Vite](https://vite.dev) (a fast development server and build tool). You can run it on its own.
+- Every demo can also be opened online in [StackBlitz](https://stackblitz.com), a code editor that runs in your browser. You don't need to install anything or create an account.
 
-## Demos
+## Try a demo online
 
-Every demo opens straight from GitHub in [StackBlitz](https://stackblitz.com), where you can run, edit and test it in the browser. No account needed.
+Click a button to open the demo in StackBlitz. It installs everything and starts the app for you, which takes about 30 seconds.
 
 | Component     | Open online                                                                                                                                                                                      |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Breath Loader | [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/breath-loader?file=src/App.tsx) |
 
-The link for any demo is:
+StackBlitz reads the code straight from this GitHub repository, so it always shows the latest version on `main`.
 
-```text
-https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/<branch>/demos/<name>?file=src/App.tsx
-```
+## Run a demo on your computer
 
-StackBlitz reads the demo straight from GitHub, so a link only works once that demo is pushed. Use `main` for merged demos, or a branch name to preview a pull request. Each demo's own `README.md` has its badge too.
+### 1. Install the tools
 
-## Create a demo
+You need:
 
-```bash
-npm run create:demo
-# Component name: pulse-loader
-```
+- **Node.js 20.19 or newer.** Check your version with `node -v`. If it's older, install the LTS version from [nodejs.org](https://nodejs.org).
+- **Git.** Check with `git --version`.
 
-Or without the prompt: `npm run create:demo -- pulse-loader`. This copies `templates/react-vite` to `demos/<name>`, already set up with Tailwind CSS 4, the `@/` alias and `zoblocks.json`. Then:
+### 2. Get the code
 
 ```bash
-cd demos/pulse-loader
+git clone https://github.com/md-nabas-pm/zoblocks-examples.git
+cd zoblocks-examples
 npm install
-npx @zoblocks/cli add pulse-loader --yes
+```
+
+`npm install` downloads the project's tools. It also sets up the Git hooks that check your commits (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+
+### 3. Start a demo
+
+Each demo has its own dependencies, so you install and start it from inside its folder:
+
+```bash
+cd demos/breath-loader
+npm install
 npm run dev
 ```
 
-After `add`, uncomment the ZoBlocks block in `src/index.css` and add one `@import` for each `styles/zoblocks-*.css` file it wrote. Commit the demo's `package-lock.json` (CI uses it), and add a row to the table above.
+Open the address it prints (usually http://localhost:5173) in your browser. Changes you save in `src/App.tsx` show up right away. Press `Ctrl + C` in the terminal to stop the server.
 
-## Development & Git workflow
+## Create a new demo
 
-| Task                 | Command                                   |
-| -------------------- | ----------------------------------------- |
-| Install dependencies | `npm install` (also installs hooks)       |
-| Run the base app     | `npm run dev`                             |
-| Lint                 | `npm run lint` / `npm run lint:fix`       |
-| Format               | `npm run format` / `npm run format:check` |
-| Typecheck            | `npm run typecheck`                       |
-| Build                | `npm run build`                           |
-| Test                 | `npm test`                                |
-| Build all demos      | `npm run build:demos` (or `-- <name>`)    |
+Run this from the **root folder** of the project (not inside `demos/`):
 
-**Branches:** `<type>/<short-description>`, e.g. `feat/button-example` or `fix/demo-generation`. Branch from `main`.
+```bash
+npm run create:demo
+```
 
-**Commits:** [Conventional Commits](https://www.conventionalcommits.org), `<type>(<scope>): <description>`, e.g. `feat(demo): add button example`. Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `style`, `perf`. A commit-msg hook rejects anything else, and a pre-commit hook lints and formats staged files.
+It asks for the component name:
 
-**Pull requests:** into `main` only, with a Conventional Commit title. CI (lint, format check, typecheck, build, tests, and a build of every demo) must pass, the branch must be up to date with `main`, and one reviewer must approve.
+```text
+Component name: pulse-loader
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the details.
+Use lowercase letters, numbers and dashes only, like `button` or `date-picker`. It then creates `demos/pulse-loader` and prints the next steps. You can also give the name directly: `npm run create:demo -- pulse-loader`.
+
+See [Adding a demo](CONTRIBUTING.md#adding-a-demo) for the full step-by-step guide, including how to add the ZoBlocks component itself.
+
+## Useful commands
+
+Run these from the **root folder**.
+
+| Command                         | What it does                                              |
+| ------------------------------- | --------------------------------------------------------- |
+| `npm run create:demo`           | Creates a new demo in `demos/`                            |
+| `npm run lint`                  | Checks the code for common mistakes                       |
+| `npm run lint:fix`              | Fixes the mistakes that can be fixed automatically        |
+| `npm run format`                | Formats all files in the project's standard style         |
+| `npm run format:check`          | Checks formatting without changing files                  |
+| `npm run typecheck`             | Checks for TypeScript type errors                         |
+| `npm test`                      | Runs the tests for the demo generator                     |
+| `npm run build`                 | Builds the small root app                                 |
+| `npm run build:demos`           | Installs and builds every demo, like the automatic checks |
+| `npm run build:demos -- <name>` | Installs and builds one demo, e.g. `-- breath-loader`     |
+
+Inside a demo folder you mostly need `npm run dev` (start it) and `npm run build` (check that it builds).
+
+## Project structure
+
+```text
+zoblocks-examples/
+├── demos/                   One folder per component demo
+│   └── breath-loader/
+├── templates/react-vite/    Starting files copied for every new demo
+├── scripts/                 The create:demo and build:demos scripts, plus tests
+├── src/                     A small root app (not a demo)
+├── .github/workflows/ci.yml Automatic checks that run on GitHub
+├── README.md                This file
+└── CONTRIBUTING.md          How to make changes and open a pull request
+```
+
+## Contributing
+
+Want to add a demo or fix something? Read [CONTRIBUTING.md](CONTRIBUTING.md). It walks you through creating a branch, writing commit messages, and opening a pull request.

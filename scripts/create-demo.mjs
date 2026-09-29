@@ -11,7 +11,8 @@ import { CLI_COMPONENTS, NPM_COMPONENTS } from "./components.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TEMPLATE_DIR = path.join(ROOT, "templates", "react-vite");
-const DEMOS_DIR = path.join(ROOT, "demos");
+// Overridable so tests can generate into a temporary folder.
+const DEMOS_DIR = process.env.DEMOS_DIR ?? path.join(ROOT, "demos");
 
 const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_NAME_LENGTH = 50;
@@ -41,13 +42,15 @@ async function readName() {
 
 function validate(name) {
   if (!name) fail("Component name is required.");
-  if (name.length > MAX_NAME_LENGTH) fail(`Component name must be at most ${MAX_NAME_LENGTH} characters.`);
+  if (name.length > MAX_NAME_LENGTH)
+    fail(`Component name must be at most ${MAX_NAME_LENGTH} characters.`);
   if (!NAME_PATTERN.test(name)) {
     fail(
       `"${name}" is not a valid name. Use lowercase letters, numbers and single dashes (e.g. button, date-picker).`,
     );
   }
-  if (fs.existsSync(path.join(DEMOS_DIR, name))) fail(`demos/${name} already exists. Choose another name or remove it first.`);
+  if (fs.existsSync(path.join(DEMOS_DIR, name)))
+    fail(`demos/${name} already exists. Choose another name or remove it first.`);
 }
 
 // "date-picker" -> "Date Picker"
@@ -65,7 +68,10 @@ function replaceTokens(dir, tokens) {
       continue;
     }
     const content = fs.readFileSync(file, "utf8");
-    const replaced = Object.entries(tokens).reduce((text, [key, value]) => text.replaceAll(`{{${key}}}`, value), content);
+    const replaced = Object.entries(tokens).reduce(
+      (text, [key, value]) => text.replaceAll(`{{${key}}}`, value),
+      content,
+    );
     if (replaced !== content) fs.writeFileSync(file, replaced);
   }
 }
@@ -76,7 +82,11 @@ function nextSteps(name) {
   }
   if (name in NPM_COMPONENTS) {
     const packages = [`@zoblocks/${name}`, ...NPM_COMPONENTS[name]].join(" ");
-    return ["Add the component:", `npm install ${packages}`, `import "@zoblocks/${name}/styles.css";`];
+    return [
+      "Add the component:",
+      `npm install ${packages}`,
+      `import "@zoblocks/${name}/styles.css";`,
+    ];
   }
   return [];
 }
@@ -85,7 +95,8 @@ const name = (await readName()).trim().toLowerCase();
 validate(name);
 
 const known = CLI_COMPONENTS.includes(name) || name in NPM_COMPONENTS;
-if (!known) console.warn(yellow(`! "${name}" is not a known ZoBlocks component. Creating the demo anyway.`));
+if (!known)
+  console.warn(yellow(`! "${name}" is not a known ZoBlocks component. Creating the demo anyway.`));
 
 const target = path.join(DEMOS_DIR, name);
 fs.mkdirSync(DEMOS_DIR, { recursive: true });

@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* ZoBlocks — uncomment after `npx @zoblocks/cli add <name> --yes`,
+   and add one @import for each styles/zoblocks-*.css it writes. */
+/* @import "./styles/zoblocks-tokens.css"; */
+/* @source "./components/zoblocks"; */

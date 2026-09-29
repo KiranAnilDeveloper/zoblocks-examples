@@ -17,6 +17,11 @@ const DEMOS_DIR = process.env.DEMOS_DIR ?? path.join(ROOT, "demos");
 const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_NAME_LENGTH = 50;
 
+// "github:owner/repo" in the root package.json -> "owner/repo", used for StackBlitz links.
+const REPO = JSON.parse(
+  fs.readFileSync(path.join(ROOT, "package.json"), "utf8"),
+).repository.replace(/^github:/, "");
+
 const color = (code) => (text) => (process.stdout.isTTY ? `\x1b[${code}m${text}\x1b[0m` : text);
 const green = color(32);
 const red = color(31);
@@ -101,7 +106,7 @@ if (!known)
 const target = path.join(DEMOS_DIR, name);
 fs.mkdirSync(DEMOS_DIR, { recursive: true });
 fs.cpSync(TEMPLATE_DIR, target, { recursive: true });
-replaceTokens(target, { name, title: toTitle(name) });
+replaceTokens(target, { name, title: toTitle(name), repo: REPO });
 
 const relative = `demos/${name}`;
 const steps = nextSteps(name);
@@ -117,6 +122,9 @@ console.log(
     "npm install",
     "npm run dev",
     ...(steps.length ? ["", ...steps] : []),
+    "",
+    "Open in StackBlitz (once pushed to main):",
+    `https://stackblitz.com/github/${REPO}/tree/main/${relative}?file=src/App.tsx`,
     "",
   ].join("\n"),
 );

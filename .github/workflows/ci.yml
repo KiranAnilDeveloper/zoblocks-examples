@@ -29,6 +29,18 @@ jobs:
       - run: npm run build
       - run: npm test
 
+  demos:
+    name: Build demos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+      - run: npm run build:demos
+
   conventions:
     name: PR title and branch name
     if: github.event_name == 'pull_request'

@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "repository": "github:md-nabas-pm/zoblocks-examples",
   "scripts": {
     "create:demo": "node scripts/create-demo.mjs",
     "dev": "vite",
@@ -14,7 +15,8 @@
     "format:check": "prettier . --check",
     "typecheck": "tsc --noEmit",
     "test": "node --test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build:demos": "node scripts/build-demos.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",

@@ -38,6 +38,31 @@ test("creates a demo with the name and title filled in", () => {
   assert.ok(fs.existsSync(path.join(demosDir, "date-picker", "public")));
 });
 
+test("adds StackBlitz config and an Open in StackBlitz link", () => {
+  const url =
+    "https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/date-picker?file=src/App.tsx";
+
+  const result = createDemo("date-picker");
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(read("date-picker", "README.md").includes(`(${url})`));
+  assert.ok(result.stdout.includes(url));
+  assert.equal(JSON.parse(read("date-picker", ".stackblitzrc")).startCommand, "npm run dev");
+});
+
+test("leaves no unreplaced placeholders", () => {
+  createDemo("date-picker");
+
+  const walk = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const file = path.join(dir, entry.name);
+      return entry.isDirectory() ? walk(file) : [file];
+    });
+  for (const file of walk(path.join(demosDir, "date-picker"))) {
+    assert.doesNotMatch(fs.readFileSync(file, "utf8"), /\{\{\w+\}\}/, file);
+  }
+});
+
 test("normalises the name to lowercase", () => {
   assert.equal(createDemo("  Button ").status, 0);
   assert.ok(fs.existsSync(path.join(demosDir, "button")));

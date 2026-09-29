@@ -1,0 +1,478 @@
+/**
+ * ZoBlocks loaders — structure and motion.
+ *
+ * Install target: styles/zoblocks-loader.css. Import it once, next to the token
+ * stylesheet:
+ *
+ *   @import "./styles/zoblocks-tokens.css";
+ *   @import "./styles/zoblocks-loader.css";
+ *
+ * Two deliberate choices:
+ *
+ *   1. No Tailwind utilities. Keyframes cannot be expressed as tokens, and a
+ *      loader whose motion depends on the host's Tailwind config renders
+ *      unstyled in a Vue or Angular app. Everything the loaders need is here.
+ *   2. Every colour is a semantic token, never a palette value, so a brand
+ *      override reaches the loaders without touching this file.
+ *
+ * Six numbers govern the whole system, and they are the calm:
+ *
+ *   beat        1000ms at 60bpm — a resting sinus rhythm
+ *   beat scale  1.07 — noticed peripherally, never tracked
+ *   cycle       4000ms — roughly a breath at 15/min
+ *   track       22% — keeps the shape legible between beats
+ *   enter/exit  160ms / 220ms
+ *   still       2400ms opacity breath, the reduced-motion state
+ */
+
+.zb-loader {
+  /* Defaults; each component overwrites what it uses via inline custom
+     properties. Declared here so the CSS is complete on its own. */
+  --zb-loader-size: 32px;
+  --zb-loader-color: var(--zb-accent, currentColor);
+  --zb-loader-track: color-mix(in oklab, var(--zb-loader-color) 22%, transparent);
+  --zb-loader-stroke: 2.4px;
+  --zb-loader-beat: 1000ms;
+  --zb-loader-cycle: 4000ms;
+  --zb-loader-scrim: color-mix(in oklab, var(--zb-bg, Canvas) 72%, transparent);
+  --zb-loader-z: 1000;
+  --zb-loader-ease: cubic-bezier(0.45, 0, 0.55, 1);
+  --zb-loader-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  display: inline-grid;
+  justify-items: center;
+  gap: 0.6em;
+  color: var(--zb-loader-color);
+  font-family: var(--zb-font-sans, inherit);
+  font-size: var(--zb-text-sm, 0.875rem);
+  line-height: 1.45;
+  text-align: center;
+  animation: zb-loader-enter 160ms var(--zb-ease, ease-out) both;
+}
+
+.zb-loader--overlay,
+.zb-loader--page {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  z-index: var(--zb-loader-z);
+}
+
+.zb-loader--page {
+  position: fixed;
+}
+
+.zb-loader--overlay[data-zb-scrim="true"],
+.zb-loader--page[data-zb-scrim="true"] {
+  background: var(--zb-loader-scrim);
+}
+
+.zb-loader__art {
+  display: block;
+  line-height: 0;
+  position: relative;
+}
+
+/* The brand-mark slot, centred over the art. Decorative by construction: it
+   sits inside the aria-hidden art wrapper, so a logo never becomes a second
+   announcement on a wait that already has a label. */
+.zb-loader__mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.zb-loader__mark > * {
+  max-width: 42%;
+  max-height: 42%;
+}
+
+.zb-loader__art > svg {
+  display: block;
+  width: var(--zb-loader-size);
+  height: auto;
+  overflow: visible;
+}
+
+.zb-loader__label {
+  color: var(--zb-text, currentColor);
+  font-weight: 500;
+}
+
+.zb-loader__value {
+  color: var(--zb-text, currentColor);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.zb-loader__hint {
+  color: var(--zb-text-muted, currentColor);
+  font-size: var(--zb-text-xs, 0.8125rem);
+  max-width: 34ch;
+}
+
+.zb-loader__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+/* Visually hidden, still announced. The label is always in the DOM because an
+   empty live region announces nothing at all. */
+.zb-loader__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Shared stroke treatment. `non-scaling-stroke` is what keeps the line the same
+   weight at 20px and at 160px — without it the mark thickens into a blob as it
+   grows and vanishes as it shrinks. */
+.zb-loader__stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--zb-loader-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.zb-loader__fill {
+  fill: currentColor;
+}
+
+.zb-loader__track {
+  opacity: 0.22;
+}
+
+/* ---------------------------------------------------------------- */
+/* Pulse and Rhythm — the cardiac pair                               */
+/* ---------------------------------------------------------------- */
+
+/* Draws once on mount, then stays. The reference redrew the heart at the top of
+   every loop, which put a visible seam in the animation every 7 seconds. */
+.zb-loader__draw {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: zb-loader-draw 700ms var(--zb-loader-ease-out) forwards;
+}
+
+.zb-loader__beat {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: zb-loader-beat var(--zb-loader-beat) var(--zb-loader-ease) infinite;
+  animation-delay: 400ms;
+}
+
+/* A monitor sweep: a bright head with a dimmer tail behind it, over a faint
+   static track. The shape never disappears between beats. */
+.zb-loader__head {
+  stroke-dasharray: 22 200;
+  stroke-dashoffset: 22;
+  animation: zb-loader-head var(--zb-loader-beat) cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation-delay: 400ms;
+}
+
+.zb-loader__tail {
+  stroke-dasharray: 44 200;
+  stroke-dashoffset: 44;
+  opacity: 0.35;
+  animation: zb-loader-tail var(--zb-loader-beat) cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation-delay: 400ms;
+}
+
+@keyframes zb-loader-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes zb-loader-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+@keyframes zb-loader-head {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@keyframes zb-loader-tail {
+  to {
+    stroke-dashoffset: -78;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Breath                                                            */
+/* ---------------------------------------------------------------- */
+
+.zb-loader__ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: zb-loader-ring var(--zb-loader-cycle) cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+
+.zb-loader__ring:nth-of-type(2) {
+  animation-delay: calc(var(--zb-loader-cycle) / -3);
+}
+
+.zb-loader__ring:nth-of-type(3) {
+  animation-delay: calc(var(--zb-loader-cycle) * -2 / 3);
+}
+
+.zb-loader__core {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: zb-loader-core var(--zb-loader-cycle) var(--zb-loader-ease) infinite;
+}
+
+@keyframes zb-loader-ring {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0.08;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes zb-loader-core {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Helix                                                             */
+/* ---------------------------------------------------------------- */
+
+/* Depth is faked with scale and opacity so the two strands read as passing in
+   front of and behind each other without a 3D transform. */
+.zb-loader__dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: zb-loader-helix calc(var(--zb-loader-cycle) * 0.65) ease-in-out infinite;
+  animation-delay: calc(var(--zb-loader-cycle) * 0.65 * var(--zb-loader-phase, 0));
+}
+
+@keyframes zb-loader-helix {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(-12px) scale(0.85);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0.45;
+  }
+  75% {
+    transform: translateY(12px) scale(0.85);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Infusion                                                          */
+/* ---------------------------------------------------------------- */
+
+.zb-loader__slug {
+  animation: zb-loader-slug calc(var(--zb-loader-cycle) * 0.7) var(--zb-loader-ease) infinite
+    alternate;
+}
+
+/* Determinate: the slug is a measurement, so it must not also drift. */
+.zb-loader[data-zb-determinate="true"] .zb-loader__slug {
+  animation: none;
+  transform: none;
+}
+
+@keyframes zb-loader-slug {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(88px);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Enter                                                             */
+/* ---------------------------------------------------------------- */
+
+@keyframes zb-loader-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zb-loader-still {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Reduced motion                                                    */
+/* ---------------------------------------------------------------- */
+
+/*
+ * The still state is designed, not merely paused.
+ *
+ * Pausing leaves the sweep frozen mid-path and the heart part-drawn, which
+ * looks like a component that failed rather than one that respects a
+ * preference. Instead: the shape completes, the track comes up to full
+ * strength, and the whole mark breathes in opacity. Nothing moves, nothing
+ * scales, and it still reads as "working".
+ *
+ * `motion="full"` opts out — for an application that offers its own motion
+ * setting and has already asked.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__draw,
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__beat,
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__head,
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__tail,
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__ring,
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__core,
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__dot,
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__slug {
+    animation: none;
+  }
+
+  .zb-loader:not([data-zb-motion="full"]) {
+    animation: none;
+  }
+
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__draw {
+    stroke-dashoffset: 0;
+  }
+
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__head,
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__tail {
+    opacity: 0;
+  }
+
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__track {
+    opacity: 1;
+  }
+
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__ring {
+    opacity: 0;
+  }
+
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__ring:nth-of-type(1) {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+
+  .zb-loader:not([data-zb-motion="full"]) .zb-loader__art {
+    animation: zb-loader-still 2400ms var(--zb-loader-ease) infinite;
+  }
+}
+
+/* The same still state, forced by the `motion` prop rather than by the OS. */
+.zb-loader[data-zb-motion="reduced"] .zb-loader__draw,
+.zb-loader[data-zb-motion="reduced"] .zb-loader__beat,
+.zb-loader[data-zb-motion="reduced"] .zb-loader__head,
+.zb-loader[data-zb-motion="reduced"] .zb-loader__tail,
+.zb-loader[data-zb-motion="reduced"] .zb-loader__ring,
+.zb-loader[data-zb-motion="reduced"] .zb-loader__core,
+.zb-loader[data-zb-motion="reduced"] .zb-loader__dot,
+.zb-loader[data-zb-motion="reduced"] .zb-loader__slug {
+  animation: none;
+}
+
+.zb-loader[data-zb-motion="reduced"] {
+  animation: none;
+}
+
+.zb-loader[data-zb-motion="reduced"] .zb-loader__draw {
+  stroke-dashoffset: 0;
+}
+
+.zb-loader[data-zb-motion="reduced"] .zb-loader__head,
+.zb-loader[data-zb-motion="reduced"] .zb-loader__tail {
+  opacity: 0;
+}
+
+.zb-loader[data-zb-motion="reduced"] .zb-loader__track {
+  opacity: 1;
+}
+
+.zb-loader[data-zb-motion="reduced"] .zb-loader__ring {
+  opacity: 0;
+}
+
+.zb-loader[data-zb-motion="reduced"] .zb-loader__ring:nth-of-type(1) {
+  opacity: 0.35;
+  transform: scale(0.7);
+}
+
+.zb-loader[data-zb-motion="reduced"] .zb-loader__art {
+  animation: zb-loader-still 2400ms var(--zb-loader-ease) infinite;
+}
+
+/* ---------------------------------------------------------------- */
+/* Forced colours                                                    */
+/* ---------------------------------------------------------------- */
+
+/*
+ * Windows High Contrast discards every custom colour, which is why the track is
+ * raised here: at 22% of a colour that no longer exists, the shape would be
+ * invisible rather than faint.
+ */
+@media (forced-colors: active) {
+  .zb-loader {
+    color: CanvasText;
+  }
+
+  .zb-loader--overlay[data-zb-scrim="true"],
+  .zb-loader--page[data-zb-scrim="true"] {
+    background: Canvas;
+  }
+
+  .zb-loader__track {
+    opacity: 0.5;
+  }
+}

@@ -5,22 +5,16 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
 import { CLI_COMPONENTS, NPM_COMPONENTS } from "./components.mjs";
+import { REPO, ROOT, demosTableRow, stackblitzUrl, toTitle } from "./demos.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TEMPLATE_DIR = path.join(ROOT, "templates", "react-vite");
 // Overridable so tests can generate into a temporary folder.
 const DEMOS_DIR = process.env.DEMOS_DIR ?? path.join(ROOT, "demos");
 
 const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_NAME_LENGTH = 50;
-
-// "github:owner/repo" in the root package.json -> "owner/repo", used for StackBlitz links.
-const REPO = JSON.parse(
-  fs.readFileSync(path.join(ROOT, "package.json"), "utf8"),
-).repository.replace(/^github:/, "");
 
 const color = (code) => (text) => (process.stdout.isTTY ? `\x1b[${code}m${text}\x1b[0m` : text);
 const green = color(32);
@@ -57,13 +51,6 @@ function validate(name) {
   if (fs.existsSync(path.join(DEMOS_DIR, name)))
     fail(`demos/${name} already exists. Choose another name or remove it first.`);
 }
-
-// "date-picker" -> "Date Picker"
-const toTitle = (name) =>
-  name
-    .split("-")
-    .map((word) => word[0].toUpperCase() + word.slice(1))
-    .join(" ");
 
 function replaceTokens(dir, tokens) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -123,8 +110,11 @@ console.log(
     "npm run dev",
     ...(steps.length ? ["", ...steps] : []),
     "",
+    "Add this row to the table in DEMOS.md (required before you can commit the demo):",
+    demosTableRow(name),
+    "",
     "Open in StackBlitz (once pushed to main):",
-    `https://stackblitz.com/github/${REPO}/tree/main/${relative}?file=src/App.tsx`,
+    stackblitzUrl(name),
     "",
   ].join("\n"),
 );

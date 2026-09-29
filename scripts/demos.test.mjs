@@ -67,3 +67,8 @@ test("reports a StackBlitz button that isn't a link", () => {
     { name: "pulse-loader", reason: "no-stackblitz" },
   ]);
 });
+
+test("reads DEMOS.md with Windows line endings", () => {
+  const markdown = table(demosTableRow("pulse-loader")).replaceAll("\n", "\r\n");
+  assert.deepEqual(findDemoProblems(markdown, ["pulse-loader"]), []);
+});

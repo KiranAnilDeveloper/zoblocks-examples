@@ -24,7 +24,7 @@ function newStagedDemos() {
   const added = git("diff", "--cached", "--name-only", "--diff-filter=A", "--", "demos/");
   const names = new Set(
     added.stdout
-      .split("\n")
+      .split(/\r?\n/)
       .map((file) => file.split("/"))
       .filter((parts) => parts.length >= 3) // demos/<name>/<file>
       .map((parts) => parts[1]),

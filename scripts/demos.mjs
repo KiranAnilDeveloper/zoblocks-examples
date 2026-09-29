@@ -49,7 +49,7 @@ export function findDemoProblems(markdown, names) {
   // Rows inside ``` code blocks are examples, not real entries, so they're skipped.
   let inCodeBlock = false;
   const rows = markdown
-    .split("\n")
+    .split(/\r?\n/) // Windows line endings too
     .filter((line) => {
       if (line.trim().startsWith("```")) inCodeBlock = !inCodeBlock;
       return !inCodeBlock && line.trim().startsWith("|");

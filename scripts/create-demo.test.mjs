@@ -85,6 +85,15 @@ for (const name of ["my button", "-bad", "bad-", "a_b", "a--b", "a.b"]) {
   });
 }
 
+for (const name of ["con", "nul", "aux", "com1"]) {
+  test(`rejects Windows reserved name "${name}"`, () => {
+    const result = createDemo(name);
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /can't be used as a folder name on Windows/);
+  });
+}
+
 test("does not overwrite an existing demo", () => {
   fs.mkdirSync(path.join(demosDir, "button"));
   fs.writeFileSync(path.join(demosDir, "button", "keep.txt"), "mine");

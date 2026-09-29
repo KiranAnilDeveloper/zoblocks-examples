@@ -100,13 +100,13 @@ export default function App() {
 
 **f. Try it:** run `npm run dev` and open the address it prints.
 
-**g. Add it to [DEMOS.md](DEMOS.md). This is required.** Every demo must have a row in the table there with an "Open in StackBlitz" link, or your commit will be stopped. `create:demo` printed the exact row for you in step a. It looks like this:
+**g. Add it to [DEMOS.md](DEMOS.md). This is required.** Every demo must have a row in the table there with an active "Open in StackBlitz" button, or your commit will be stopped. `create:demo` printed the exact row for you in step a. It looks like this:
 
 ```md
-| Pulse Loader | [Open in StackBlitz](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/pulse-loader?file=src/App.tsx) · CodeSandbox — Coming soon · JSFiddle — Coming soon |
+| Pulse Loader | [![Open in StackBlitz](https://img.shields.io/badge/StackBlitz-Open-1389FD?style=for-the-badge&logo=stackblitz&logoColor=white)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/pulse-loader?file=src/App.tsx) ![CodeSandbox coming soon](https://img.shields.io/badge/CodeSandbox-Coming_soon-lightgrey?style=for-the-badge&logo=codesandbox&logoColor=white) ![JSFiddle coming soon](https://img.shields.io/badge/JSFiddle-Coming_soon-lightgrey?style=for-the-badge&logo=jsfiddle&logoColor=white) |
 ```
 
-Leave CodeSandbox and JSFiddle as `Coming soon`. Remember to commit `DEMOS.md` together with your demo (`git add DEMOS.md`).
+Keep the grey CodeSandbox and JSFiddle buttons as they are; they mean "coming soon". Remember to commit `DEMOS.md` together with your demo (`git add DEMOS.md`).
 
 > Keep TypeScript at version 6 in demos. TypeScript 7 doesn't run in StackBlitz.
 

@@ -51,3 +51,19 @@ test("ignores example rows inside code blocks", () => {
     { name: "pulse-loader", reason: "missing" },
   ]);
 });
+
+test("the generated row uses an active StackBlitz button and disabled buttons for the rest", () => {
+  const row = demosTableRow("pulse-loader");
+  assert.ok(row.includes(`[![Open in StackBlitz](`));
+  assert.ok(row.includes(`](${stackblitzUrl("pulse-loader")})`));
+  assert.match(row, /!\[CodeSandbox coming soon\]\(https:\/\/img\.shields\.io\/[^)]+\) /);
+  assert.match(row, /!\[JSFiddle coming soon\]\(https:\/\/img\.shields\.io\/[^)]+\) \|$/);
+});
+
+test("reports a StackBlitz button that isn't a link", () => {
+  const row =
+    "| Pulse Loader | ![StackBlitz coming soon](https://img.shields.io/badge/StackBlitz-Coming_soon-lightgrey) |";
+  assert.deepEqual(findDemoProblems(table(row), ["pulse-loader"]), [
+    { name: "pulse-loader", reason: "no-stackblitz" },
+  ]);
+});

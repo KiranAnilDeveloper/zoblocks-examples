@@ -1,0 +1,8 @@
+dist
+package-lock.json
+# Contains {{placeholders}} that Prettier would rewrite.
+templates
+# Source copied in by `npx @zoblocks/cli add` — owned upstream.
+demos/*/src/components/zoblocks
+demos/*/src/lib
+demos/*/src/styles

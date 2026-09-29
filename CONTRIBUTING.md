@@ -58,7 +58,7 @@ cd demos/pulse-loader
 npm install
 ```
 
-This also creates a `package-lock.json` file. **Commit it.** It records the exact package versions, so the automatic checks and StackBlitz install the same thing you did.
+This also creates a `package-lock.json` file. **Commit it.** It records the exact package versions, so the automatic checks, StackBlitz and CodeSandbox install the same thing you did.
 
 **c. Add the ZoBlocks component:**
 
@@ -100,15 +100,15 @@ export default function App() {
 
 **f. Try it:** run `npm run dev` and open the address it prints.
 
-**g. Add it to [DEMOS.md](DEMOS.md). This is required.** Every demo must have a row in the table there with an active "Open in StackBlitz" button, or your commit will be stopped. `create:demo` printed the exact row for you in step a. It looks like this:
+**g. Add it to [DEMOS.md](DEMOS.md). This is required.** Every demo must have a row in the table there with active "Open in StackBlitz" and "Open in CodeSandbox" buttons, or your commit will be stopped. `create:demo` printed the exact row for you in step a. It looks like this:
 
 ```md
-| Pulse Loader | [![Open in StackBlitz](https://img.shields.io/badge/StackBlitz-Open-1389FD?style=for-the-badge&logo=stackblitz&logoColor=white)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/pulse-loader?file=src/App.tsx) ![CodeSandbox coming soon](https://img.shields.io/badge/CodeSandbox-Coming_soon-lightgrey?style=for-the-badge&logo=codesandbox&logoColor=white) ![JSFiddle coming soon](https://img.shields.io/badge/JSFiddle-Coming_soon-lightgrey?style=for-the-badge&logo=jsfiddle&logoColor=white) |
+| Pulse Loader | [![Open in StackBlitz](https://img.shields.io/badge/StackBlitz-Open-1389FD?style=for-the-badge&logo=stackblitz&logoColor=white)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/pulse-loader?file=src/App.tsx) [![Open in CodeSandbox](https://img.shields.io/badge/CodeSandbox-Open-151515?style=for-the-badge&logo=codesandbox&logoColor=white)](https://codesandbox.io/p/devbox/github/md-nabas-pm/zoblocks-examples/tree/main/demos/pulse-loader) ![JSFiddle coming soon](https://img.shields.io/badge/JSFiddle-Coming_soon-lightgrey?style=for-the-badge&logo=jsfiddle&logoColor=white) |
 ```
 
-Keep the grey CodeSandbox and JSFiddle buttons as they are; they mean "coming soon". Remember to commit `DEMOS.md` together with your demo (`git add DEMOS.md`).
+Keep the grey JSFiddle button as it is; it means "coming soon". Remember to commit `DEMOS.md` together with your demo (`git add DEMOS.md`).
 
-> Keep TypeScript at version 6 in demos. TypeScript 7 doesn't run in StackBlitz.
+> Every demo created with `create:demo` already works in StackBlitz and CodeSandbox. Don't delete these files from a demo: `.stackblitzrc` (StackBlitz), and `.codesandbox/` and `.devcontainer/` (CodeSandbox: how to install and start the demo, and which Node.js version to use). Keep TypeScript at version 6 in demos. TypeScript 7 doesn't run in StackBlitz.
 
 ### Code style
 
@@ -176,7 +176,7 @@ git commit -m "feat(demo): add pulse loader example"
 
 Automatic checks (called Git hooks) run when you commit:
 
-1. **New demos** must be listed in `DEMOS.md` with a StackBlitz link. If one isn't, the error shows the exact row to add.
+1. **New demos** must be listed in `DEMOS.md` with StackBlitz and CodeSandbox links. If one isn't, the error shows the exact row to add.
 2. **ESLint and Prettier** check and tidy the files you're committing.
 3. **The commit message** is checked against the format above.
 
@@ -195,10 +195,11 @@ Then open the repository on GitHub and click **Compare & pull request**.
 - Give the pull request a title in the commit format, for example `feat(demo): add button example`.
 - Describe what you changed and how you tested it.
 
-**Tip:** you can try your demo in StackBlitz before it's merged. Take the demo's link and replace `main` with your branch name:
+**Tip:** you can try your demo online before it's merged. Take the demo's link and replace `main` with your branch name:
 
 ```text
 https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/feat/button-example/demos/button?file=src/App.tsx
+https://codesandbox.io/p/devbox/github/md-nabas-pm/zoblocks-examples/tree/feat/button-example/demos/button
 ```
 
 ## 6. Automatic checks and review

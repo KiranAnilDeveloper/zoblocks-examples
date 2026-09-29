@@ -1,12 +1,18 @@
 #!/usr/bin/env node
-// Checks that demos are listed in DEMOS.md with an "Open in StackBlitz" link.
+// Checks that demos are listed in DEMOS.md with "Open in StackBlitz" and "Open in CodeSandbox" links.
 //   npm run check:demos                        every demo (used by CI)
 //   node scripts/check-demos-md.mjs --staged   only demos added in this commit (pre-commit hook)
 
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { ROOT, demosTableRow, findDemoProblems, stackblitzButton } from "./demos.mjs";
+import {
+  ROOT,
+  codesandboxButton,
+  demosTableRow,
+  findDemoProblems,
+  stackblitzButton,
+} from "./demos.mjs";
 
 const color = (code) => (text) => (process.stdout.isTTY ? `\x1b[${code}m${text}\x1b[0m` : text);
 const red = color(31);
@@ -55,8 +61,14 @@ const lines = [
   "",
   red(bold(`✗ DEMOS.md is missing information about a demo.`)),
   "",
-  'Every demo must be listed in DEMOS.md with an "Open in StackBlitz" button.',
+  'Every demo must be listed in DEMOS.md with "Open in StackBlitz" and "Open in CodeSandbox" buttons.',
 ];
+
+// What to show for a missing link: platform name and the exact button to add.
+const MISSING_LINK = {
+  "no-stackblitz": { platform: "StackBlitz", button: stackblitzButton },
+  "no-codesandbox": { platform: "CodeSandbox", button: codesandboxButton },
+};
 
 for (const { name, reason } of problems) {
   lines.push("");
@@ -68,11 +80,12 @@ for (const { name, reason } of problems) {
     );
     lines.push(`  ${demosTableRow(name)}`);
   } else {
+    const { platform, button } = MISSING_LINK[reason];
     lines.push(
-      bold(`• demos/${name} is listed, but its StackBlitz link is missing or wrong.`),
-      '  The "Open online" column must contain this StackBlitz button:',
+      bold(`• demos/${name} is listed, but its ${platform} link is missing or wrong.`),
+      `  The "Open online" column must contain this ${platform} button:`,
       "",
-      `  ${stackblitzButton(name)}`,
+      `  ${button(name)}`,
     );
   }
 }

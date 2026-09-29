@@ -4,17 +4,23 @@ Small example apps (called **demos**) that show how to use [ZoBlocks](https://zo
 
 - Each demo lives in its own folder under `demos/`, for example `demos/breath-loader`.
 - Each demo is a complete [React](https://react.dev) app built with [Vite](https://vite.dev) (a fast development server and build tool). You can run it on its own.
-- Every demo can also be opened online in [StackBlitz](https://stackblitz.com), a code editor that runs in your browser. You don't need to install anything or create an account.
+- Every demo can also be opened online, with nothing to install, in [StackBlitz](https://stackblitz.com) (runs in your browser, no account needed) or [CodeSandbox](https://codesandbox.io) (runs on a cloud machine; may ask you to sign in).
 
 ## Try a demo online
 
 **[See all demos in DEMOS.md →](DEMOS.md)**
 
-Each demo opens in StackBlitz, which installs everything and starts the app for you in about 30 seconds. For example:
+Each demo has an **Open in StackBlitz** and an **Open in CodeSandbox** button. Both install everything and start the app for you. For example, the Breath Loader demo:
 
-[![Open in StackBlitz](https://img.shields.io/badge/StackBlitz-Open-1389FD?style=for-the-badge&logo=stackblitz&logoColor=white)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/breath-loader?file=src/App.tsx) Breath Loader
+[![Open in StackBlitz](https://img.shields.io/badge/StackBlitz-Open-1389FD?style=for-the-badge&logo=stackblitz&logoColor=white)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/breath-loader?file=src/App.tsx) [![Open in CodeSandbox](https://img.shields.io/badge/CodeSandbox-Open-151515?style=for-the-badge&logo=codesandbox&logoColor=white)](https://codesandbox.io/p/devbox/github/md-nabas-pm/zoblocks-examples/tree/main/demos/breath-loader)
 
-StackBlitz reads the code straight from this GitHub repository, so it always shows the latest version on `main`. CodeSandbox and JSFiddle links are coming later.
+Both read the code straight from this GitHub repository, so they always show the latest version on `main`. There are no separate StackBlitz or CodeSandbox projects to keep up to date. JSFiddle links are coming later.
+
+|               | StackBlitz       | CodeSandbox                                             |
+| ------------- | ---------------- | ------------------------------------------------------- |
+| Where it runs | In your browser  | On a cloud machine                                      |
+| Account       | Not needed       | May ask you to sign in                                  |
+| Start time    | About 30 seconds | Up to a couple of minutes the first time after a change |
 
 ## Run a demo on your computer
 

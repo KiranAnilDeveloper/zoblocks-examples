@@ -6,4 +6,6 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
+  // Let CodeSandbox's preview (https://<id>-5173.csb.app) reach the dev server.
+  server: { allowedHosts: [".csb.app"] },
 });

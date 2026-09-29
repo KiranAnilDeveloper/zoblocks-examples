@@ -72,7 +72,7 @@ The full test suite is not run on commit. CI runs it.
 
 - The PR title follows the commit format, e.g. `feat(demo): add button example`.
 - The branch is up to date with `main`.
-- CI passes: lint, format check, typecheck, build and tests.
+- CI passes: lint, format check, typecheck, build, tests, and every demo builds (`npm run build:demos`).
 - At least one reviewer approves.
 - Nobody pushes directly to `main`.
 
@@ -84,6 +84,16 @@ npm run typecheck
 npm run build
 npm test
 ```
+
+## Adding a demo
+
+1. `npm run create:demo -- <component>` creates `demos/<component>`.
+2. `cd demos/<component> && npm install`, then commit the generated `package-lock.json`.
+3. `npx @zoblocks/cli add <component> --yes`, enable its styles in `src/index.css`, and use it in `src/App.tsx`.
+4. `npm run build:demos -- <component>` from the root checks it the same way CI does.
+5. Add the demo to the table in `README.md`, then open a PR. To try it in StackBlitz before merging, use the link with your branch name in place of `main`.
+
+Keep demos on TypeScript 6. TypeScript 7 ships only as native binaries, which StackBlitz cannot run.
 
 ## Code style
 

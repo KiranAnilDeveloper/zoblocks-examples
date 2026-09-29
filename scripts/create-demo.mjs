@@ -15,6 +15,8 @@ const DEMOS_DIR = process.env.DEMOS_DIR ?? path.join(ROOT, "demos");
 
 const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_NAME_LENGTH = 50;
+// Windows can't create files or folders with these names.
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/;
 
 const color = (code) => (text) => (process.stdout.isTTY ? `\x1b[${code}m${text}\x1b[0m` : text);
 const green = color(32);
@@ -47,6 +49,9 @@ function validate(name) {
     fail(
       `"${name}" is not a valid name. Use lowercase letters, numbers and single dashes (e.g. button, date-picker).`,
     );
+  }
+  if (WINDOWS_RESERVED.test(name)) {
+    fail(`"${name}" can't be used as a folder name on Windows. Choose another name.`);
   }
   if (fs.existsSync(path.join(DEMOS_DIR, name)))
     fail(`demos/${name} already exists. Choose another name or remove it first.`);

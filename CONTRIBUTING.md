@@ -182,6 +182,8 @@ Automatic checks (called Git hooks) run when you commit:
 
 If any check fails, the commit is **not created**. Fix the problem it reports and run `git commit` again.
 
+The hooks work on Windows, macOS and Linux, whether you commit from a terminal or from an app like VS Code or GitHub Desktop. On Windows they run with the `sh` that comes with Git for Windows.
+
 ## 5. Push and open a pull request
 
 ```bash
@@ -219,12 +221,15 @@ If a check fails, click **Details** next to it to see the error. Fix it, commit 
 
 ## Troubleshooting
 
-| Problem                                         | Fix                                                                                                             |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| My commit was rejected                          | Read the message. It's usually the commit format, or a lint error in a staged file.                             |
-| The component has no styling                    | Check the `@import` and `@source` lines in the demo's `src/index.css` (step 2d).                                |
-| `Cannot find module '@/…'`                      | The demo's `vite.config.ts` or `tsconfig.json` lost its `@` setting. Compare them with `templates/react-vite/`. |
-| `build:demos` says `No package-lock.json`       | Run `npm install` inside that demo folder and commit the `package-lock.json`.                                   |
-| `DEMOS.md is missing information about a demo`  | Add the row the error shows to `DEMOS.md`, run `git add DEMOS.md`, and commit again.                            |
-| `demos/<name> already exists`                   | That demo already exists. Pick another name or work on the existing one.                                        |
-| `npm warn EBADENGINE` or strange install errors | Your Node.js is too old. Check with `node -v` and install 20.19 or newer.                                       |
+| Problem                                                                                                                                                                              | Fix                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| My commit was rejected                                                                                                                                                               | Read the message. It's usually the commit format, or a lint error in a staged file.                                                                                                                     |
+| The component has no styling                                                                                                                                                         | Check the `@import` and `@source` lines in the demo's `src/index.css` (step 2d).                                                                                                                        |
+| `Cannot find module '@/…'`                                                                                                                                                           | The demo's `vite.config.ts` or `tsconfig.json` lost its `@` setting. Compare them with `templates/react-vite/`.                                                                                         |
+| `build:demos` says `No package-lock.json`                                                                                                                                            | Run `npm install` inside that demo folder and commit the `package-lock.json`.                                                                                                                           |
+| `DEMOS.md is missing information about a demo`                                                                                                                                       | Add the row the error shows to `DEMOS.md`, run `git add DEMOS.md`, and commit again.                                                                                                                    |
+| `demos/<name> already exists`                                                                                                                                                        | That demo already exists. Pick another name or work on the existing one.                                                                                                                                |
+| Hook error `node: command not found` or `npx: command not found` (usually when committing from an app like VS Code or GitHub Desktop, often with a Node version manager such as nvm) | The app can't find Node.js. Commit from a terminal instead, or follow [Husky's guide](https://typicode.github.io/husky/how-to.html#node-version-managers-and-guis) to create `~/.config/husky/init.sh`. |
+| Windows: every file shows as changed, or `format:check` fails on files you didn't touch                                                                                              | Your copy was cloned with Windows (CRLF) line endings, before the project set LF for everyone. Save your work, then clone the repository again.                                                         |
+| Windows: `"con" can't be used as a folder name`                                                                                                                                      | Windows reserves a few names (`con`, `nul`, `aux`, `prn`, `com1`…). Choose another demo name.                                                                                                           |
+| `npm warn EBADENGINE` or strange install errors                                                                                                                                      | Your Node.js is too old. Check with `node -v` and install 20.19 or newer.                                                                                                                               |

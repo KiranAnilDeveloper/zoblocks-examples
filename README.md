@@ -23,7 +23,9 @@ StackBlitz reads the code straight from this GitHub repository, so it always sho
 You need:
 
 - **Node.js 20.19 or newer.** Check your version with `node -v`. If it's older, install the LTS version from [nodejs.org](https://nodejs.org).
-- **Git.** Check with `git --version`.
+- **Git.** Check with `git --version`. On Windows, install [Git for Windows](https://git-scm.com/download/win). It includes the tools the project's Git hooks need.
+
+The project works the same on **Windows, macOS and Linux**. Every command in this README and in [CONTRIBUTING.md](CONTRIBUTING.md) works in any terminal: PowerShell, Command Prompt, Git Bash, or the macOS/Linux terminal. On Windows, run commands one line at a time, as shown.
 
 ### 2. Get the code
 

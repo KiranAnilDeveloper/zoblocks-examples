@@ -8,13 +8,13 @@ Small example apps (called **demos**) that show how to use [ZoBlocks](https://zo
 
 ## Try a demo online
 
-Click a button to open the demo in StackBlitz. It installs everything and starts the app for you, which takes about 30 seconds.
+**[See all demos in DEMOS.md →](DEMOS.md)**
 
-| Component     | Open online                                                                                                                                                                                      |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Breath Loader | [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/breath-loader?file=src/App.tsx) |
+Each demo opens in StackBlitz, which installs everything and starts the app for you in about 30 seconds. For example:
 
-StackBlitz reads the code straight from this GitHub repository, so it always shows the latest version on `main`.
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/breath-loader?file=src/App.tsx) Breath Loader
+
+StackBlitz reads the code straight from this GitHub repository, so it always shows the latest version on `main`. CodeSandbox and JSFiddle links are coming later.
 
 ## Run a demo on your computer
 
@@ -81,6 +81,7 @@ Run these from the **root folder**.
 | `npm run build`                 | Builds the small root app                                 |
 | `npm run build:demos`           | Installs and builds every demo, like the automatic checks |
 | `npm run build:demos -- <name>` | Installs and builds one demo, e.g. `-- breath-loader`     |
+| `npm run check:demos`           | Checks that every demo is listed in `DEMOS.md`            |
 
 Inside a demo folder you mostly need `npm run dev` (start it) and `npm run build` (check that it builds).
 
@@ -94,6 +95,7 @@ zoblocks-examples/
 ├── scripts/                 The create:demo and build:demos scripts, plus tests
 ├── src/                     A small root app (not a demo)
 ├── .github/workflows/ci.yml Automatic checks that run on GitHub
+├── DEMOS.md                 List of all demos with their online links
 ├── README.md                This file
 └── CONTRIBUTING.md          How to make changes and open a pull request
 ```

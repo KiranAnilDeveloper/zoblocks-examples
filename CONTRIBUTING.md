@@ -100,7 +100,13 @@ export default function App() {
 
 **f. Try it:** run `npm run dev` and open the address it prints.
 
-**g. Add it to the README.** Add a row to the table in [README.md](README.md#try-a-demo-online). Copy the Breath Loader row and change the name in the link.
+**g. Add it to [DEMOS.md](DEMOS.md). This is required.** Every demo must have a row in the table there with an "Open in StackBlitz" link, or your commit will be stopped. `create:demo` printed the exact row for you in step a. It looks like this:
+
+```md
+| Pulse Loader | [Open in StackBlitz](https://stackblitz.com/github/md-nabas-pm/zoblocks-examples/tree/main/demos/pulse-loader?file=src/App.tsx) · CodeSandbox — Coming soon · JSFiddle — Coming soon |
+```
+
+Leave CodeSandbox and JSFiddle as `Coming soon`. Remember to commit `DEMOS.md` together with your demo (`git add DEMOS.md`).
 
 > Keep TypeScript at version 6 in demos. TypeScript 7 doesn't run in StackBlitz.
 
@@ -119,6 +125,7 @@ Run these from the root folder before you commit. They are the same checks that 
 ```bash
 npm run lint
 npm run format:check
+npm run check:demos
 npm run typecheck
 npm test
 npm run build:demos
@@ -167,12 +174,13 @@ git commit -m "feat(demo): add pulse loader example"
 
 ### What happens when you commit
 
-Two automatic checks (called Git hooks) run when you commit:
+Automatic checks (called Git hooks) run when you commit:
 
-1. **Before the commit**, ESLint and Prettier check and tidy the files you're committing.
-2. **The commit message** is checked against the format above.
+1. **New demos** must be listed in `DEMOS.md` with a StackBlitz link. If one isn't, the error shows the exact row to add.
+2. **ESLint and Prettier** check and tidy the files you're committing.
+3. **The commit message** is checked against the format above.
 
-If either check fails, the commit is **not created**. Fix the problem it reports and run `git commit` again.
+If any check fails, the commit is **not created**. Fix the problem it reports and run `git commit` again.
 
 ## 5. Push and open a pull request
 
@@ -217,5 +225,6 @@ If a check fails, click **Details** next to it to see the error. Fix it, commit 
 | The component has no styling                    | Check the `@import` and `@source` lines in the demo's `src/index.css` (step 2d).                                |
 | `Cannot find module '@/…'`                      | The demo's `vite.config.ts` or `tsconfig.json` lost its `@` setting. Compare them with `templates/react-vite/`. |
 | `build:demos` says `No package-lock.json`       | Run `npm install` inside that demo folder and commit the `package-lock.json`.                                   |
+| `DEMOS.md is missing information about a demo`  | Add the row the error shows to `DEMOS.md`, run `git add DEMOS.md`, and commit again.                            |
 | `demos/<name> already exists`                   | That demo already exists. Pick another name or work on the existing one.                                        |
 | `npm warn EBADENGINE` or strange install errors | Your Node.js is too old. Check with `node -v` and install 20.19 or newer.                                       |

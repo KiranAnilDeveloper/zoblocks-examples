@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test",
     "prepare": "husky",
-    "build:demos": "node scripts/build-demos.mjs"
+    "build:demos": "node scripts/build-demos.mjs",
+    "check:demos": "node scripts/check-demos-md.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",

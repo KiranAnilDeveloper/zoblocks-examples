@@ -1,0 +1,2105 @@
+/**
+ * Date, time and session — the shared stylesheet.
+ *
+ * Three rules run through all of it.
+ *
+ * **The field chrome is not ours.** Every input here spends the shared
+ * `--zb-field-*` tokens, so a date field and a dose field cannot drift apart
+ * in a customer's theme. Only the surface a calendar and a session triple add
+ * on top is scoped to `--zb-datetime-*`.
+ *
+ * **Nothing is carried by colour alone.** Today is a dot as well as a weight,
+ * an unavailable day is struck as well as dimmed, and the held member of a
+ * session triple has a lock glyph and the word `Held` beside its tint. Remove
+ * the hue — greyscale, monochrome print, forced-colors, a red-green
+ * deficiency — and every one of those states still reads.
+ *
+ * **Logical properties only.** The grid mirrors in an RTL locale for free;
+ * the numeric value inside it does not, which is set on the element in
+ * `date-field.tsx` and is the detail hand-rolled RTL usually gets wrong.
+ */
+
+/* ------------------------------------------------------------------ */
+/* The segmented field                                                */
+/* ------------------------------------------------------------------ */
+
+.zb-dt-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  min-block-size: var(--zb-datetime-target, 2.75rem);
+  padding-block: var(--zb-field-pad-y, 0.375rem);
+  padding-inline: var(--zb-field-pad-x, 0.625rem);
+  border: 1px solid var(--zb-field-border, #94a3b8);
+  border-radius: var(--zb-field-radius, 0.375rem);
+  background: var(--zb-field-bg, #fff);
+  color: var(--zb-field-fg, inherit);
+  font-family: var(--zb-font-sans, inherit);
+  font-size: var(--zb-datetime-font, var(--zb-text-sm, 0.875rem));
+  font-variant-numeric: tabular-nums;
+  cursor: text;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    border-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    box-shadow var(--zb-datetime-duration, 150ms) var(--zb-ease, ease);
+}
+
+.zb-dt-field:hover {
+  border-color: var(--zb-border-strong, #64748b);
+}
+
+.zb-dt-field:focus-visible,
+.zb-dt-field:focus-within {
+  outline: none;
+  border-color: var(--zb-field-border-focus, #2563eb);
+  box-shadow: 0 0 0 3px var(--zb-focus-ring, rgb(37 99 235 / 0.35));
+}
+
+.zb-dt-field--invalid {
+  border-color: var(--zb-field-border-invalid, #b91c1c);
+}
+
+.zb-dt-field--readonly {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 0;
+  cursor: default;
+}
+
+.zb-dt-field--disabled {
+  border-color: var(--zb-border, #e2e8f0);
+  background: var(--zb-bg-muted, #f1f5f9);
+  color: var(--zb-text-muted, #64748b);
+  cursor: not-allowed;
+}
+
+/*
+ * One half of a shell that owns the box.
+ *
+ * The focus ring goes with the border: two rings inside one outline is two
+ * controls, and the shell already draws the one that says where focus is.
+ * `min-block-size` goes too, so the shell rather than its halves sets the
+ * height of the row.
+ */
+.zb-dt-field--bare,
+.zb-dt-field--bare:hover,
+.zb-dt-field--bare:focus-visible,
+.zb-dt-field--bare:focus-within {
+  min-block-size: 0;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+/*
+ * A segment is the atom of keyboard entry: one roving tabstop, arrow keys step
+ * its own unit, digits type into it, and it advances itself the moment no
+ * further digit could be valid. That last rule is what makes eight keystrokes
+ * enough for a full date, and it is the highest-leverage detail in the whole
+ * component for somebody entering forty dates a day.
+ */
+.zb-dt-field__seg {
+  /*
+   * A box, not a run of text.
+   *
+   * A segment is a pointer target — you tap the month to edit the month — so
+   * it is held at the 24px floor of WCAG 2.2 SC 2.5.8 in both axes, at every
+   * density. Left as an inline span it measured 20 x 19.5 at clinical
+   * density, and the spacing allowance cannot rescue it: the segments are
+   * adjacent, so their 24px circles always intersect. Two digits do not need
+   * 24px of ink, which is exactly why this has to be asserted rather than
+   * left to the type.
+   */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--zb-density-target-floor, 1.5rem);
+  min-inline-size: max(1.15em, var(--zb-density-target-floor, 1.5rem));
+  padding-inline: 0.125rem;
+  border-radius: 0.125rem;
+  text-align: center;
+  transition:
+    background-color var(--zb-duration-fast, 90ms) var(--zb-ease, ease),
+    color var(--zb-duration-fast, 90ms) var(--zb-ease, ease);
+}
+
+/* The year is four digits wide at every density, so `max()` is a no-op here
+   and the floor never widens it past its own type. */
+.zb-dt-field__seg--year {
+  min-inline-size: max(2.4em, var(--zb-density-target-floor, 1.5rem));
+}
+
+.zb-dt-field__seg--empty {
+  color: var(--zb-field-placeholder-fg, #64748b);
+}
+
+.zb-dt-field__seg--active {
+  background: var(--zb-datetime-cell-selected-bg, #2563eb);
+  color: var(--zb-datetime-cell-selected-fg, #fff);
+}
+
+.zb-dt-field--readonly .zb-dt-field__seg--active {
+  background: transparent;
+  color: inherit;
+}
+
+.zb-dt-field__sep {
+  color: var(--zb-text-muted, #64748b);
+  padding-inline: 0;
+}
+
+/*
+ * The digits lean on their separator.
+ *
+ * Every segment is held at the 24px target floor whatever it contains, so two
+ * digits set at 13px leave a few pixels of slack on each side and `9:30`
+ * renders as `9 : 30` — three things rather than one time. Leaning the
+ * outermost segments inward closes the gap around the colon and moves the
+ * slack to the ends of the run, where nothing has to be read across it. A
+ * zero-width separator was tried first and is worse: it centres on the
+ * boundary between two segments whose slack differs, so a one-digit hour
+ * pushes the colon off-centre and it ends up touching the minute.
+ */
+.zb-dt-field__seg--end {
+  justify-content: flex-end;
+  padding-inline-end: 0;
+}
+
+.zb-dt-field__seg--start {
+  justify-content: flex-start;
+  padding-inline-start: 0;
+}
+
+.zb-dt-field__trigger {
+  display: inline-grid;
+  place-items: center;
+  margin-inline-start: auto;
+  inline-size: var(--zb-datetime-target, 2.75rem);
+  block-size: 1.5rem;
+  min-inline-size: 1.5rem;
+  flex: none;
+  border: 0;
+  border-radius: 0.125rem;
+  background: none;
+  color: var(--zb-text-muted, #64748b);
+  cursor: pointer;
+  transition:
+    background-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease);
+}
+
+.zb-dt-field__trigger:hover {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+  color: var(--zb-text, inherit);
+}
+
+.zb-dt-field__trigger:focus-visible {
+  outline: 2px solid var(--zb-field-border-focus, #2563eb);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Field surroundings — label, message, age                           */
+/* ------------------------------------------------------------------ */
+
+.zb-dt-stack {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.25rem;
+  font-family: var(--zb-font-sans, inherit);
+}
+
+.zb-dt-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--zb-text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--zb-field-label-fg, inherit);
+}
+
+.zb-dt-label__required {
+  color: var(--zb-field-error-fg, #b91c1c);
+}
+
+.zb-dt-label__optional {
+  color: var(--zb-text-muted, #64748b);
+  font-weight: 400;
+}
+
+/*
+ * Three tiers, three treatments, and the distinction is the point.
+ *
+ * `error` blocks and is announced assertively. `warning` is a conflict — the
+ * value is legal and collides with other state — and never blocks. `hint` is
+ * an advisory: legal, unusual, worth saying once, with no colour weight at
+ * all, because a clinician documenting last Friday's session is doing
+ * something ordinary and must not be told they have made a mistake.
+ */
+.zb-dt-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  font-size: var(--zb-text-xs, 0.75rem);
+  line-height: 1.4;
+  color: var(--zb-field-hint-fg, #64748b);
+}
+
+.zb-dt-msg--error {
+  color: var(--zb-field-error-fg, #b91c1c);
+}
+
+.zb-dt-msg--warning {
+  color: var(--zb-status-high, #b45309);
+}
+
+.zb-dt-msg--success {
+  color: var(--zb-status-normal, #15803d);
+}
+
+.zb-dt-msg__glyph {
+  flex: none;
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  margin-block-start: 0.0625rem;
+}
+
+/*
+ * The age is the user's proof-read. A transposed year is invisible in
+ * 07/18/1968 and screaming in "58 years old".
+ */
+.zb-dt-age {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.zb-dt-age__value {
+  font-size: var(--zb-text-xl, 1.25rem);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--zb-text, inherit);
+  font-variant-numeric: tabular-nums;
+}
+
+.zb-dt-age__unit {
+  font-size: var(--zb-text-xs, 0.75rem);
+  color: var(--zb-text-muted, #64748b);
+}
+
+/* ------------------------------------------------------------------ */
+/* Calendar                                                           */
+/* ------------------------------------------------------------------ */
+
+.zb-dt-cal {
+  display: flex;
+  align-items: stretch;
+  /* Shrink to the months it draws. A block-level flex container fills its
+     parent, which stretched a two-month panel across a 1,300px stage and put
+     twelve hundred pixels between the rail and the grid it belongs to. */
+  inline-size: fit-content;
+  font-family: var(--zb-font-sans, inherit);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.zb-dt-cal__body {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  flex: 1;
+}
+
+.zb-dt-cal__months {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.75rem;
+}
+
+.zb-dt-cal__month {
+  inline-size: 17.5rem;
+  flex: none;
+}
+
+.zb-dt-cal--fluid,
+.zb-dt-cal--fluid .zb-dt-cal__month {
+  inline-size: 100%;
+}
+
+/* A fluid calendar fills its container, so its wrapper has to as well. As a
+   flex item the wrapper sized to its content: in a 269px card the grid took
+   185px and Cancel / Done ended 84px short of the card's edge. */
+[data-zb-calendar]:has(> .zb-dt-cal--fluid) {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.zb-dt-cal--fluid .zb-dt-cal__month {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/*
+ * The named-period rail.
+ *
+ * A separator rather than a fill: the rail is a second way into the same
+ * selection, not a different surface, and a filled panel beside a white grid
+ * reads as two controls that happen to be adjacent.
+ */
+.zb-dt-cal__aside {
+  flex: none;
+  padding-inline-end: 1rem;
+  margin-inline-end: 1rem;
+  border-inline-end: 1px solid var(--zb-border, #e2e8f0);
+}
+
+.zb-dt-cal__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 8.5rem;
+  max-block-size: 20rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.zb-dt-cal__preset {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--zb-density-target-floor, 1.5rem);
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  border: 0;
+  border-radius: var(--zb-radius, 0.5rem);
+  background: none;
+  color: var(--zb-text, inherit);
+  font: inherit;
+  font-size: var(--zb-datetime-font, var(--zb-text-sm, 0.875rem));
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--zb-duration-fast, 90ms) var(--zb-ease, ease),
+    color var(--zb-duration-fast, 90ms) var(--zb-ease, ease);
+}
+
+.zb-dt-cal__preset:hover {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+}
+
+.zb-dt-cal__preset:focus-visible {
+  outline: 2px solid var(--zb-field-border-focus, #2563eb);
+  outline-offset: -2px;
+}
+
+/* Weight as well as fill, so the chosen period survives greyscale. */
+.zb-dt-cal__preset--on {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+  color: var(--zb-text, inherit);
+  font-weight: 600;
+}
+
+.zb-dt-cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  margin-block-end: 0.75rem;
+}
+
+.zb-dt-cal__nav,
+.zb-dt-cal__title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding-inline: 0.25rem;
+  border: 0;
+  border-radius: var(--zb-radius, 0.5rem);
+  background: none;
+  /* Full-strength ink. A paging control drawn at the weight of secondary text
+     reads as decoration, and it is the only way out of the month on screen. */
+  color: var(--zb-text, inherit);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease);
+}
+
+/* The bound is on the window, so every copy of the control shows it. */
+.zb-dt-cal__nav[data-zb-dt-blocked="true"] {
+  color: var(--zb-text-subtle, #94a3b8);
+  cursor: default;
+}
+
+.zb-dt-cal__title {
+  padding-inline: 0.5rem;
+  font-size: var(--zb-text-base, 1rem);
+  font-weight: 600;
+  color: var(--zb-text, inherit);
+}
+
+.zb-dt-cal__nav:hover,
+.zb-dt-cal__title:hover {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+  color: var(--zb-text, inherit);
+}
+
+.zb-dt-cal__nav:focus-visible,
+.zb-dt-cal__title:focus-visible {
+  outline: 2px solid var(--zb-field-border-focus, #2563eb);
+  outline-offset: 1px;
+}
+
+/* Kept reachable and announced rather than removed: a control that vanishes at
+   the boundary tells the reader nothing about why they cannot go further. */
+.zb-dt-cal__nav[data-zb-dt-blocked="true"]:hover {
+  background: none;
+}
+
+/* A chevron still points the way it was drawn; the mirror is not free. */
+[dir="rtl"] .zb-dt-cal__nav svg {
+  scale: -1 1;
+}
+
+/*
+ * Row gap, not cell gap.
+ *
+ * The band has to run unbroken across a week and break cleanly between them,
+ * so the columns close up and the rows open out. A 1px row gap made every
+ * week's band touch the next and the whole selection read as one slab.
+ */
+.zb-dt-cal__grid {
+  display: grid;
+  gap: 0.25rem;
+}
+
+/*
+ * Each week is its own seven-column grid rather than the whole month being
+ * one. `role="grid"` requires row children and `columnheader` requires a row
+ * parent, and a flat forty-nine-cell grid satisfies neither — axe reports both
+ * as critical. Rows-as-grids avoids `display: contents`, which would keep the
+ * flat layout but still carries accessibility-tree caveats in some engines.
+ *
+ * No column gap, deliberately. A range band drawn cell by cell across a 1px
+ * gap is a dashed stripe rather than a band, and the alternative — painting
+ * the band on a pseudo-element that bleeds over the gap — collides with the
+ * two pseudo-elements a cell already spends on the today dot and the
+ * unavailable strike. Closing the gap also widens the pointer target, which
+ * is the direction WCAG 2.2 SC 2.5.8 wants it to move.
+ */
+.zb-dt-cal__row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+/*
+ * "Mo Tu We", not "MO TU WE".
+ *
+ * Two letters set in caps with tracking read as an abbreviation of something
+ * else — a code, a column key — rather than as the day they name. Sentence
+ * case is also what the rest of this system labels with, and a header row is
+ * not the place to make an exception.
+ */
+.zb-dt-cal__weekday {
+  display: grid;
+  place-items: center;
+  block-size: 1.5rem;
+  margin-block-end: 0.25rem;
+  font-size: var(--zb-text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--zb-datetime-weekday-fg, #64748b);
+}
+
+/*
+ * The visible cell is 2rem; the interactive target is the whole grid track and
+ * is floored at the density target. Clinical density tightens the type and the
+ * gaps and never the target — WCAG 2.2 SC 2.5.8 is a floor, not a preference,
+ * and a mis-tap on a calendar cell is clinically consequential in a way it is
+ * not on a marketing site.
+ */
+.zb-dt-cal__day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  block-size: var(--zb-datetime-cell-size, 2.25rem);
+  min-block-size: 1.5rem;
+  border: 0;
+  border-radius: var(--zb-datetime-cell-radius, 0.5rem);
+  background: none;
+  color: var(--zb-datetime-cell-fg, inherit);
+  font: inherit;
+  font-size: var(--zb-text-sm, 0.875rem);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--zb-duration-fast, 90ms) var(--zb-ease, ease),
+    color var(--zb-duration-fast, 90ms) var(--zb-ease, ease),
+    box-shadow var(--zb-duration-fast, 90ms) var(--zb-ease, ease);
+}
+
+.zb-dt-cal__day:hover {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+}
+
+.zb-dt-cal__day:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--zb-surface, #fff),
+    0 0 0 4px var(--zb-focus-ring, rgb(37 99 235 / 0.35));
+  z-index: 1;
+}
+
+/* Holds a column open where a month has no day. Not a button, not a target,
+   and never announced as one. */
+.zb-dt-cal__blank {
+  block-size: var(--zb-datetime-cell-size, 2rem);
+  min-block-size: 1.5rem;
+}
+
+.zb-dt-cal__day--outside {
+  color: var(--zb-datetime-cell-muted-fg, #64748b);
+}
+
+.zb-dt-cal__day--unavailable {
+  color: var(--zb-datetime-cell-muted-fg, #64748b);
+  background: none;
+  pointer-events: none;
+}
+
+/*
+ * The second channel on an unavailable day. A single diagonal rather than a
+ * lighter grey, so the state survives greyscale and a reader who cannot
+ * separate two tones of the same hue.
+ */
+.zb-dt-cal__day--unavailable::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.5rem;
+  inset-block-start: 50%;
+  block-size: 1px;
+  background: var(--zb-border-strong, #94a3b8);
+  rotate: -20deg;
+}
+
+.zb-dt-cal__day--today {
+  font-weight: 600;
+  color: var(--zb-datetime-today-marker, #2563eb);
+}
+
+.zb-dt-cal__day--today::before {
+  content: "";
+  position: absolute;
+  inset-block-end: 0.25rem;
+  inline-size: 3px;
+  block-size: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/*
+ * The band, then the chip.
+ *
+ * Every day of the span carries the band — the ends included, because a band
+ * that starts a cell late reads as though the day it bounds were outside the
+ * range it bounds. Square in the middle so adjacent cells join; capped at the
+ * ends of the range and at the ends of each week, because the band breaks
+ * across rows and an uncapped break looks like a rendering fault.
+ */
+.zb-dt-cal__day--in-range {
+  border-radius: 0;
+  background: var(--zb-datetime-cell-range-bg, #dbeafe);
+  color: var(--zb-datetime-cell-range-fg, inherit);
+}
+
+.zb-dt-cal__day--in-range:hover {
+  background: var(--zb-datetime-cell-range-bg, #dbeafe);
+}
+
+/*
+ * The half-built range, while the second end is still being pointed at.
+ *
+ * The same wash as a plain hover, one step below the committed band, because
+ * a span that is being pointed at and a span that has been chosen are two
+ * states and must not paint as one — a reader who cannot tell them apart has
+ * no way to know whether the second click has landed.
+ *
+ * It has to beat `--in-range:hover`, which is why it is declared after it and
+ * repeats itself for the hovered case: every previewed cell is also in range
+ * (`datetime-field.tsx` sets `--previewed` only alongside `--in-range`), so a
+ * bare `--previewed` at (0,1,0) loses to that rule at (0,2,0) and the one cell
+ * under the pointer — the cell that *defines* the end being chosen — would
+ * paint as though it were already committed.
+ */
+.zb-dt-cal__day--previewed,
+.zb-dt-cal__day--previewed:hover {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+}
+
+.zb-dt-cal__day--range-lo,
+.zb-dt-cal__day--week-lo {
+  border-start-start-radius: var(--zb-datetime-cell-radius, 0.25rem);
+  border-end-start-radius: var(--zb-datetime-cell-radius, 0.25rem);
+}
+
+.zb-dt-cal__day--range-hi,
+.zb-dt-cal__day--week-hi {
+  border-start-end-radius: var(--zb-datetime-cell-radius, 0.25rem);
+  border-end-end-radius: var(--zb-datetime-cell-radius, 0.25rem);
+}
+
+/* Drawn over the band, and fully rounded: the endpoints of a range are the two
+   days the reader actually chose, and they are read as chips rather than as a
+   darker part of the band. */
+.zb-dt-cal__day--selected,
+.zb-dt-cal__day--selected:hover {
+  border-radius: var(--zb-datetime-cell-radius, 0.25rem);
+  background: var(--zb-datetime-cell-selected-bg, #2563eb);
+  color: var(--zb-datetime-cell-selected-fg, #fff);
+  font-weight: 500;
+}
+
+/* Availability density under the numeral: how much is open, before a click
+   has been spent finding out. */
+.zb-dt-cal__load {
+  position: absolute;
+  inset-block-end: 0.1875rem;
+  display: flex;
+  gap: 2px;
+}
+
+.zb-dt-cal__load i {
+  inline-size: 3px;
+  block-size: 3px;
+  border-radius: 50%;
+  background: var(--zb-status-normal, #15803d);
+}
+
+.zb-dt-cal__day--selected .zb-dt-cal__load i {
+  background: currentColor;
+}
+
+/*
+ * The footer wraps to the grid; it never widens it.
+ *
+ * The panel sizes to the months it draws, and a legend plus two buttons is
+ * wider than one month — so as a normal flex item the footer set the width and
+ * stretched a single-month calendar half a screen wide. `inline-size: 0` with
+ * a percentage minimum is the standard way to say "take the width you are
+ * given, contribute none of your own": the percentage resolves against a width
+ * still being computed, so it is treated as auto for intrinsic sizing and the
+ * row simply wraps instead.
+ */
+.zb-dt-cal__foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  inline-size: 0;
+  min-inline-size: 100%;
+  margin-block-start: 0.75rem;
+  padding-block-start: 0.75rem;
+  border-block-start: 1px solid var(--zb-border, #e2e8f0);
+}
+
+/*
+ * The keyboard legend.
+ *
+ * `aria-hidden` in the markup: a screen-reader user is told how to drive a
+ * grid by the grid itself, and this is here for the much larger group of
+ * sighted keyboard users who would otherwise never find out the calendar has
+ * arrow keys at all.
+ */
+.zb-dt-cal__hints {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: var(--zb-text-xs, 0.75rem);
+  color: var(--zb-text-muted, #64748b);
+}
+
+.zb-dt-cal__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.zb-dt-cal__hint kbd {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
+  padding-inline: 0.1875rem;
+  border: 1px solid var(--zb-border, #e2e8f0);
+  border-radius: var(--zb-radius-sm, 0.25rem);
+  background: var(--zb-surface, #fff);
+  color: var(--zb-text-muted, #64748b);
+  font: inherit;
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  line-height: 1;
+}
+
+/* Pushed to the far end of the footer, so a reader's eye goes hints → value →
+   commit and the primary action sits where every dialog in the system puts it. */
+.zb-dt-cal__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.zb-dt-cal__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--zb-density-target-floor, 1.5rem);
+  padding-block: 0.5rem;
+  padding-inline: 1.125rem;
+  border: 1px solid var(--zb-border, #e2e8f0);
+  border-radius: var(--zb-radius, 0.5rem);
+  background: var(--zb-surface, #fff);
+  color: var(--zb-text, inherit);
+  font: inherit;
+  font-size: var(--zb-datetime-font, var(--zb-text-sm, 0.875rem));
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--zb-duration-fast, 90ms) var(--zb-ease, ease),
+    border-color var(--zb-duration-fast, 90ms) var(--zb-ease, ease);
+}
+
+.zb-dt-cal__action:hover {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+}
+
+.zb-dt-cal__action:focus-visible {
+  outline: 2px solid var(--zb-field-border-focus, #2563eb);
+  outline-offset: 1px;
+}
+
+.zb-dt-cal__action--primary {
+  border-color: var(--zb-datetime-cell-selected-bg, #2563eb);
+  background: var(--zb-datetime-cell-selected-bg, #2563eb);
+  color: var(--zb-datetime-cell-selected-fg, #fff);
+}
+
+.zb-dt-cal__action--primary:hover {
+  background: var(--zb-accent-hover, #1d4ed8);
+  border-color: var(--zb-accent-hover, #1d4ed8);
+}
+
+/* Disabled rather than hidden: Done exists from the moment the panel opens, and
+   a button that appears once the range is whole moves the footer under the
+   reader's pointer at the exact moment they are reaching for it. */
+.zb-dt-cal__action[disabled] {
+  border-color: var(--zb-border, #e2e8f0);
+  /* `bg-subtle`, not `bg-muted`. Sitting beside a green panel, the muted step
+     of a blue-biased neutral ramp reads as a lavender chip rather than as an
+     absent button — the disabled state should recede, and a filled one that
+     draws the eye is the opposite of what it means. */
+  background: var(--zb-bg-subtle, #f8fafc);
+  color: var(--zb-text-muted, #64748b);
+  cursor: not-allowed;
+}
+
+/*
+ * The month and year panes. A date-of-birth field must never make anybody
+ * press "previous month" four hundred and eighty times, which is what makes
+ * the calendar a legitimate fallback rather than a punishment.
+ */
+.zb-dt-cal__pane {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.zb-dt-cal__pane--years {
+  max-block-size: 12.5rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.zb-dt-cal__pane button {
+  block-size: 1.875rem;
+  border: 0;
+  border-radius: 0.125rem;
+  background: none;
+  color: var(--zb-datetime-cell-fg, inherit);
+  font: inherit;
+  font-size: var(--zb-text-sm, 0.875rem);
+  cursor: pointer;
+}
+
+.zb-dt-cal__pane button:hover {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+}
+
+.zb-dt-cal__pane button[aria-pressed="true"] {
+  background: var(--zb-datetime-cell-selected-bg, #2563eb);
+  color: var(--zb-datetime-cell-selected-fg, #fff);
+  font-weight: 500;
+}
+
+.zb-dt-cal__pane button:focus-visible {
+  outline: 2px solid var(--zb-field-border-focus, #2563eb);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------------------ */
+/* The range shell — two halves, one field                            */
+/* ------------------------------------------------------------------ */
+
+/*
+ * One box holding two segmented halves, an arrow and a derived badge.
+ *
+ * The border, the hover and the focus ring live here rather than on the
+ * halves: two bordered boxes with an arrow between them read as two questions,
+ * and a reader answering "when does this start and end" is answering one.
+ * The halves stay two tab stops, because the single-tab-stop rule is per
+ * field and arrowing through six segments to reach the end date is worse than
+ * one extra Tab.
+ */
+.zb-dt-range {
+  /* `inline-flex`, exactly as `.zb-dt-field` is: the shell sizes to the value
+     it holds, and stretches only where a grid or flex parent asks it to. A
+     block-level flex box filled a 1,300px stage with one date range. */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-block-size: var(--zb-datetime-target, 2.75rem);
+  padding-block: var(--zb-field-pad-y, 0.375rem);
+  padding-inline: var(--zb-field-pad-x, 0.625rem);
+  border: 1px solid var(--zb-field-border, #94a3b8);
+  border-radius: var(--zb-field-radius, 0.375rem);
+  background: var(--zb-field-bg, #fff);
+  color: var(--zb-field-fg, inherit);
+  font-family: var(--zb-font-sans, inherit);
+  font-size: var(--zb-datetime-font, var(--zb-text-sm, 0.875rem));
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    box-shadow var(--zb-datetime-duration, 150ms) var(--zb-ease, ease);
+}
+
+.zb-dt-range:hover {
+  border-color: var(--zb-border-strong, #64748b);
+}
+
+.zb-dt-range:focus-within {
+  outline: none;
+  border-color: var(--zb-field-border-focus, #2563eb);
+  box-shadow: 0 0 0 3px var(--zb-focus-ring, rgb(37 99 235 / 0.35));
+}
+
+.zb-dt-range--invalid {
+  border-color: var(--zb-field-border-invalid, #b91c1c);
+}
+
+.zb-dt-range--readonly {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 0;
+}
+
+.zb-dt-range--disabled {
+  border-color: var(--zb-border, #e2e8f0);
+  background: var(--zb-bg-muted, #f1f5f9);
+  color: var(--zb-text-muted, #64748b);
+  cursor: not-allowed;
+}
+
+.zb-dt-range__glyph {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  color: var(--zb-text-muted, #64748b);
+}
+
+/*
+ * An arrow, not a hyphen or an en dash. A dash between two dates that already
+ * contain slashes is one more separator in a row of separators; an arrow says
+ * which end is which, and mirrors correctly in an RTL layout.
+ */
+.zb-dt-range__arrow {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  padding-inline: 0.125rem;
+  color: var(--zb-text-muted, #64748b);
+}
+
+[dir="rtl"] .zb-dt-range__arrow svg {
+  scale: -1 1;
+}
+
+/*
+ * The derived member, beside the value that produced it.
+ *
+ * A badge rather than a message row: the day count and the duration are
+ * proof-reads, read in the same glance as the value, and a line of helper text
+ * under the field is a glance away. It carries no interaction and no colour
+ * weight — it is a fact about what has been entered, not a verdict on it.
+ */
+.zb-dt-range__span {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  margin-inline-start: auto;
+  padding-block: 0.125rem;
+  padding-inline: 0.375rem;
+  border-radius: var(--zb-radius-sm, 0.25rem);
+  background: var(--zb-datetime-duration-bg, #f1f5f9);
+  color: var(--zb-text-muted, #64748b);
+  font-size: var(--zb-text-xs, 0.75rem);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The badge already claimed the free space; the trigger sits after it. */
+.zb-dt-range__span + .zb-dt-range__trigger,
+.zb-dt-range__trigger {
+  margin-inline-start: auto;
+}
+
+.zb-dt-range__span + .zb-dt-range__trigger {
+  margin-inline-start: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* The time-range panel — two columns of offered times                */
+/* ------------------------------------------------------------------ */
+
+.zb-dt-timerange {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 17rem;
+}
+
+.zb-dt-timerange__cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* A rule between the columns rather than a gap: they are two halves of one
+   question, and a gap wide enough to read as a separator is wide enough to
+   read as two panels. */
+.zb-dt-timecol + .zb-dt-timecol {
+  padding-inline-start: 0.5rem;
+  margin-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--zb-border, #e2e8f0);
+}
+
+.zb-dt-timecol {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.zb-dt-timecol__head {
+  padding-block-end: 0.375rem;
+  padding-inline: 0.5rem;
+  font-size: var(--zb-text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--zb-text-muted, #64748b);
+}
+
+/*
+ * Capped and scrolled.
+ *
+ * A day at half-hour steps is forty-eight options and a panel that renders
+ * them all is taller than most viewports — which puts the commit buttons off
+ * screen, and SC 2.4.11 then has the popover hiding the field that opened it.
+ */
+.zb-dt-timecol__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-block-size: 15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.zb-dt-timeopt {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--zb-density-target-floor, 1.5rem);
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  border: 0;
+  border-radius: var(--zb-radius, 0.5rem);
+  background: none;
+  color: var(--zb-text, inherit);
+  font: inherit;
+  font-size: var(--zb-datetime-font, var(--zb-text-sm, 0.875rem));
+  font-variant-numeric: tabular-nums;
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--zb-duration-fast, 90ms) var(--zb-ease, ease),
+    color var(--zb-duration-fast, 90ms) var(--zb-ease, ease);
+}
+
+.zb-dt-timeopt:hover {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+}
+
+.zb-dt-timeopt:focus-visible {
+  outline: 2px solid var(--zb-field-border-focus, #2563eb);
+  outline-offset: -2px;
+}
+
+/* Weight as well as fill: the chosen time has to survive greyscale, and a
+   grey pill on a white column is the first thing a monochrome print loses. */
+.zb-dt-timeopt[aria-selected="true"] {
+  background: var(--zb-datetime-cell-hover-bg, #f1f5f9);
+  font-weight: 600;
+}
+
+/*
+ * A time that cannot end this range. Struck as well as dimmed, the same second
+ * channel an unavailable calendar day gets, and the reason is in the
+ * accessible name rather than in a tone of grey.
+ */
+.zb-dt-timeopt--blocked {
+  color: var(--zb-datetime-cell-muted-fg, #64748b);
+  text-decoration: line-through;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Popover                                                            */
+/* ------------------------------------------------------------------ */
+
+.zb-dt-anchor {
+  position: relative;
+  display: inline-block;
+}
+
+/* Fixed to the viewport, and rendered into <body> rather than beside the
+   field.
+
+   An absolutely-positioned panel is at the mercy of every ancestor: one
+   `overflow: hidden` on a card for its rounded corners, or an `overflow-x:
+   auto` on a stage so wide content can scroll, and the calendar is sliced off.
+   Both were live — a demo card cut 105px off the bottom of the month grid, and
+   `overflow-x: auto` cannot be paired with a visible `overflow-y`, so no
+   amount of CSS on the panel could rescue it. The panel's position is computed
+   from the field's own rect and refreshed on scroll and resize. */
+.zb-dt-pop {
+  position: fixed;
+  z-index: 40;
+  padding: 1rem;
+  border: 1px solid var(--zb-datetime-popover-border, #e2e8f0);
+  border-radius: var(--zb-radius-xl, 1rem);
+  background: var(--zb-datetime-popover-bg, #fff);
+  /* Stated, not inherited. The panel is portalled into <body>, so it no longer
+     picks up the ink of the field it belongs to — and a panel that takes its
+     background from the theme scope it carries while taking its text colour
+     from the page is dark text on a dark surface. */
+  color: var(--zb-text, inherit);
+  font-family: var(--zb-font-sans, inherit);
+  box-shadow: var(--zb-shadow-lg, 0 14px 34px -10px rgb(15 23 42 / 0.2));
+  animation: zb-dt-pop-in var(--zb-duration, 200ms) var(--zb-ease, ease) both;
+  /* Never larger than the viewport less the 8px gutter the script clamps to.
+     A panel that fits is unchanged; one that does not scrolls inside itself
+     instead of running off a screen it cannot be scrolled back from. */
+  box-sizing: border-box;
+  max-inline-size: calc(100vw - 16px);
+  max-block-size: calc(100vh - 16px);
+  max-block-size: calc(100dvh - 16px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * The phone presentation: a bottom sheet.
+ *
+ * Chosen in script below 40rem, or on a touch screen held landscape. Full
+ * width, one month, presets as a row above the grid, and day cells a finger
+ * can hit. The dialog, its label, Escape and focus are the popover's own —
+ * only the geometry changes.
+ */
+.zb-dt-pop--sheet {
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 41;
+  max-inline-size: none;
+  max-block-size: 85vh;
+  max-block-size: min(85dvh, 100%);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-block-start: 0;
+  padding-block-end: max(1rem, env(safe-area-inset-bottom));
+  border-inline: 0;
+  border-block-end: 0;
+  border-radius: 0;
+  border-start-start-radius: var(--zb-radius-xl, 1rem);
+  border-start-end-radius: var(--zb-radius-xl, 1rem);
+  animation-name: zb-dt-sheet-up;
+}
+
+.zb-dt-pop__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / 0.35);
+  animation: zb-dt-scrim-in var(--zb-duration, 200ms) var(--zb-ease, ease) both;
+}
+
+.zb-dt-pop__grip {
+  inline-size: 2.125rem;
+  block-size: 0.25rem;
+  margin: 0.5rem auto 0.75rem;
+  border-radius: 2px;
+  background: var(--zb-border-strong, #cbd5e1);
+}
+
+/* The content keeps a readable measure on a landscape phone rather than
+   stretching seven day cells across 850px. */
+.zb-dt-pop--sheet .zb-dt-cal,
+.zb-dt-pop--sheet .zb-dt-timerange {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 26rem;
+  margin-inline: auto;
+}
+
+.zb-dt-pop--sheet .zb-dt-cal__preset {
+  min-block-size: 2.5rem;
+  padding-block: 0;
+}
+
+/* A phone held upright: one column, presets above the grid as a single
+   scrolling row, bled to the sheet's edges so a clipped chip reads as "there
+   is more" rather than as a cut-off. */
+@media (max-width: 40rem) {
+  .zb-dt-pop--sheet .zb-dt-cal {
+    flex-direction: column;
+  }
+
+  .zb-dt-pop--sheet .zb-dt-cal__month {
+    flex: 1;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  .zb-dt-pop--sheet .zb-dt-cal__aside {
+    min-inline-size: 0;
+    margin-inline: -1rem;
+    margin-block-end: 0.75rem;
+    padding-inline: 0;
+    padding-block-end: 0.75rem;
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--zb-border, #e2e8f0);
+  }
+
+  .zb-dt-pop--sheet .zb-dt-cal__rail {
+    flex-direction: row;
+    gap: 0.375rem;
+    min-inline-size: 0;
+    max-block-size: none;
+    padding-inline: 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-padding-inline: 1rem;
+    scrollbar-width: none;
+  }
+
+  .zb-dt-pop--sheet .zb-dt-cal__preset {
+    flex: none;
+    border: 1px solid var(--zb-border, #e2e8f0);
+    border-radius: 999px;
+  }
+}
+
+/* The commit row never scrolls out of reach. It sticks to the bottom of the
+   sheet on the sheet's own surface, bleeds into the side padding so its rule
+   reads edge to edge, and carries the home-indicator inset itself — so the
+   sheet drops its own bottom padding whenever there is a footer to hold it. */
+.zb-dt-pop--sheet:has(.zb-dt-cal__foot) {
+  padding-block-end: 0;
+}
+
+.zb-dt-pop--sheet .zb-dt-cal__foot {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 1;
+  min-inline-size: calc(100% + 2rem);
+  margin-inline: -1rem;
+  padding-inline: 1rem;
+  padding-block-end: max(1rem, env(safe-area-inset-bottom));
+  background: var(--zb-datetime-popover-bg, #fff);
+}
+
+/* The chip row fades on whichever side still hides a chip, so a clipped
+   "Next Monday" reads as more to scroll rather than as a cut. The side is set
+   in script from the scroll position. */
+@media (max-width: 40rem) {
+  .zb-dt-pop--sheet .zb-dt-cal__rail {
+    --zb-dt-fade-start: 0px;
+    --zb-dt-fade-end: 0px;
+    --zb-dt-fade-dir: to right;
+    -webkit-mask-image: linear-gradient(
+      var(--zb-dt-fade-dir),
+      transparent,
+      #000 var(--zb-dt-fade-start),
+      #000 calc(100% - var(--zb-dt-fade-end)),
+      transparent
+    );
+    mask-image: linear-gradient(
+      var(--zb-dt-fade-dir),
+      transparent,
+      #000 var(--zb-dt-fade-start),
+      #000 calc(100% - var(--zb-dt-fade-end)),
+      transparent
+    );
+  }
+
+  .zb-dt-pop--sheet[dir="rtl"] .zb-dt-cal__rail {
+    --zb-dt-fade-dir: to left;
+  }
+
+  .zb-dt-pop--sheet .zb-dt-cal__rail[data-zb-fade-start] {
+    --zb-dt-fade-start: 2rem;
+  }
+
+  .zb-dt-pop--sheet .zb-dt-cal__rail[data-zb-fade-end] {
+    --zb-dt-fade-end: 2rem;
+  }
+}
+
+/* A phone on its side has width to spare and no height: the rail goes back
+   beside the month, which saves the row it would take above it. */
+@media (min-width: 40.0625rem) {
+  .zb-dt-pop--sheet .zb-dt-cal {
+    inline-size: fit-content;
+    max-inline-size: none;
+  }
+
+  .zb-dt-pop--sheet .zb-dt-cal__month {
+    inline-size: 20rem;
+  }
+}
+
+/* 2.5rem = 40px, and a 320px screen still gives each column 41px. */
+.zb-dt-pop--sheet .zb-dt-cal__day {
+  block-size: 2.5rem;
+}
+
+.zb-dt-pop--sheet .zb-dt-cal__nav,
+.zb-dt-pop--sheet .zb-dt-cal__title {
+  min-inline-size: 2.5rem;
+  block-size: 2.5rem;
+}
+
+.zb-dt-pop--sheet .zb-dt-cal__pane button {
+  block-size: 2.5rem;
+}
+
+/* A legend of arrow keys is noise on a screen with no hover, which in
+   practice means no keyboard in hand. In a 269px card it wrapped to two lines
+   and pushed the actions down; in the sheet it cost the row that lets the
+   month fit without scrolling. */
+@media (hover: none) {
+  .zb-dt-cal__hints {
+    display: none;
+  }
+}
+
+@keyframes zb-dt-sheet-up {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes zb-dt-scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The flip is decided in script now, because it needs the panel's measured
+   height and the field's position in the viewport — neither of which CSS can
+   see. The class remains so the entry animation can come from the right side.
+   SC 2.4.11: a popover must never be the thing that hides the field that
+   opened it. */
+.zb-dt-pop--above {
+  animation-name: zb-dt-pop-in-above;
+}
+
+/* The marker the panel is positioned against. Zero-size and out of flow, so
+   it can sit inside the field without affecting its layout. */
+.zb-dt-anchor__mark {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+}
+
+@keyframes zb-dt-pop-in-above {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes zb-dt-pop-in {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Chips — relative dates, durations, presets                         */
+/* ------------------------------------------------------------------ */
+
+.zb-dt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.zb-dt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-block-size: 1.5rem;
+  padding-inline: 0.5rem;
+  border: 1px solid var(--zb-datetime-chip-border, #e2e8f0);
+  border-radius: var(--zb-radius-full, 999px);
+  background: var(--zb-datetime-chip-bg, #fff);
+  color: var(--zb-datetime-chip-fg, #64748b);
+  font: inherit;
+  font-size: var(--zb-text-xs, 0.75rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    border-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease);
+}
+
+.zb-dt-chip:hover {
+  border-color: var(--zb-border-strong, #64748b);
+  color: var(--zb-text, inherit);
+}
+
+.zb-dt-chip[aria-pressed="true"] {
+  background: var(--zb-datetime-chip-on-bg, #2563eb);
+  border-color: transparent;
+  color: var(--zb-datetime-chip-on-fg, #fff);
+}
+
+.zb-dt-chip:focus-visible {
+  outline: 2px solid var(--zb-field-border-focus, #2563eb);
+  outline-offset: 1px;
+}
+
+.zb-dt-chip__code {
+  font-family: var(--zb-font-numeric, var(--zb-font-mono, monospace));
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  opacity: 0.75;
+}
+
+/* ------------------------------------------------------------------ */
+/* Session — start, end, duration, and the visible driver             */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Aligned at the top, not the bottom.
+ *
+ * Only two of the three columns carry a driver badge, so bottom alignment
+ * pushes the start field a badge-height lower than the other two and the row
+ * reads as three unrelated controls. Top alignment puts the labels on one
+ * line and the fields on one line, and lets the badges hang below whichever
+ * columns have them — which is the arrangement that makes the triple read as
+ * one value.
+ */
+.zb-dt-session {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.zb-dt-session__arrow {
+  display: inline-flex;
+  align-items: center;
+  block-size: var(--zb-datetime-target, 2.75rem);
+  /* Clears the label row above the fields, so the glyph sits on the field's
+     own centre line rather than on the label's. Derived from the label's type
+     and the stack gap rather than nudged, so it survives a density change. */
+  margin-block-start: calc(var(--zb-text-xs, 0.75rem) * 1.45 + 0.25rem);
+  flex: none;
+  color: var(--zb-text-muted, #64748b);
+}
+
+[dir="rtl"] .zb-dt-session__arrow svg {
+  scale: -1 1;
+}
+
+.zb-dt-session__duration {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-inline-size: 5.25rem;
+  min-block-size: var(--zb-datetime-target, 2.75rem);
+  padding-inline: 0.5rem;
+  border: 1px solid var(--zb-border, #e2e8f0);
+  border-radius: var(--zb-field-radius, 0.375rem);
+  background: var(--zb-datetime-duration-bg, #f1f5f9);
+  color: var(--zb-text, inherit);
+  font-size: var(--zb-datetime-font, var(--zb-text-sm, 0.875rem));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.zb-dt-session__duration--held {
+  background: var(--zb-datetime-duration-held-bg, #dbeafe);
+  border-color: var(--zb-datetime-duration-held-border, #93c5fd);
+}
+
+.zb-dt-session__duration--invalid {
+  border-color: var(--zb-field-border-invalid, #b91c1c);
+  color: var(--zb-field-error-fg, #b91c1c);
+}
+
+/*
+ * Which value is asserted and which is computed, rendered on both, every time.
+ * A triple that silently recomputes is the most common defect in scheduling
+ * UI; this badge is the component's entire contribution to fixing it.
+ */
+.zb-dt-driver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--zb-datetime-derived-fg, #64748b);
+}
+
+.zb-dt-driver--held {
+  color: var(--zb-datetime-held-fg, #2563eb);
+}
+
+.zb-dt-driver__glyph {
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+}
+
+/* The next-day marker on an overnight session. Two dates, one shift, and the
+   boundary is stated in the value rather than left for the reader to infer
+   from a time that got smaller. */
+.zb-dt-nextday {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 1.25rem;
+  padding-inline: 0.375rem;
+  border: 1px solid var(--zb-status-high-border, #fcd34d);
+  border-radius: var(--zb-radius-sm, 0.25rem);
+  background: var(--zb-status-high-bg, #fffbeb);
+  color: var(--zb-status-high, #b45309);
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Read-only clinical display                                         */
+/* ------------------------------------------------------------------ */
+
+.zb-dt-readout {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  font-family: var(--zb-font-sans, inherit);
+  font-size: var(--zb-datetime-font, var(--zb-text-sm, 0.875rem));
+  color: var(--zb-text, inherit);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The absolute value first, the relative aid second. "3 days after service" is
+ * a reading aid; the timestamp is the record, and a reviewer will ask.
+ */
+.zb-dt-readout__relative {
+  color: var(--zb-text-muted, #64748b);
+  font-size: var(--zb-text-xs, 0.75rem);
+}
+
+.zb-dt-readout__zone {
+  display: block;
+  inline-size: 100%;
+  color: var(--zb-text-muted, #64748b);
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  font-family: var(--zb-font-mono, monospace);
+}
+
+/* Absence is stated, never punctuated. Not an em dash, not "N/A". */
+.zb-dt-readout__absent {
+  color: var(--zb-text-muted, #64748b);
+  font-style: normal;
+}
+
+.zb-dt-readout--restricted {
+  color: var(--zb-status-restricted, #4338ca);
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion, forced colours, print                                      */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The designed still state, not a paused animation.
+ *
+ * A sweep frozen mid-flight looks like a component that has crashed, so under
+ * reduced motion every transition here becomes an instant state change.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .zb-dt-field,
+  .zb-dt-field__seg,
+  .zb-dt-field__trigger,
+  .zb-dt-cal__nav,
+  .zb-dt-cal__title,
+  .zb-dt-cal__day,
+  .zb-dt-cal__preset,
+  .zb-dt-cal__action,
+  .zb-dt-timeopt,
+  .zb-dt-chip {
+    transition-duration: 1ms;
+  }
+
+  .zb-dt-pop,
+  .zb-dt-pop__scrim {
+    animation: none;
+  }
+}
+
+/*
+ * Windows high contrast strips backgrounds and custom colours. Selection keeps
+ * a fill through the system Highlight pair, and the diagonal on an unavailable
+ * day keeps its stroke — the two states a calendar cannot lose.
+ */
+@media (forced-colors: active) {
+  .zb-dt-cal__day--selected,
+  .zb-dt-cal__pane button[aria-pressed="true"],
+  .zb-dt-cal__preset--on,
+  .zb-dt-cal__action--primary,
+  .zb-dt-timeopt[aria-selected="true"],
+  .zb-dt-chip[aria-pressed="true"],
+  .zb-dt-field__seg--active {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  /*
+   * The band survives as an outline. Forced colors strips the fill, and a
+   * range whose only channel was that fill becomes two chips with nothing
+   * between them — which is a different range.
+   */
+  .zb-dt-cal__day--in-range {
+    outline: 1px solid Highlight;
+    outline-offset: -1px;
+  }
+
+  .zb-dt-cal__nav[aria-disabled="true"],
+  .zb-dt-cal__action[disabled] {
+    color: GrayText;
+  }
+
+  .zb-dt-cal__day--unavailable::after {
+    background: GrayText;
+  }
+
+  .zb-dt-cal__day:focus-visible,
+  .zb-dt-field:focus-within {
+    outline: 2px solid CanvasText;
+    outline-offset: 1px;
+  }
+}
+
+/*
+ * Print carries the record, so it carries the timestamp and its zone. The
+ * controls are chrome and go.
+ */
+@media print {
+  .zb-dt-field__trigger,
+  .zb-dt-chips,
+  .zb-dt-cal__nav {
+    display: none;
+  }
+
+  .zb-dt-field {
+    border-color: transparent;
+    padding-inline: 0;
+  }
+
+  .zb-dt-readout__zone {
+    display: block;
+  }
+}
+
+/*
+ * Visually hidden, still announced.
+ *
+ * Scoped rather than reaching for a utility class: these sheets ship into a
+ * consumer's project on their own, and `sr-only` is a name the application
+ * usually already owns — possibly with a different definition.
+ */
+.zb-dt-sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==================================================================== */
+/* Slots, day strip, recurrence and series                              */
+/*                                                                      */
+/* Kept in the same sheet as the fields rather than split per engine:    */
+/* they share the --zb-datetime-* surface, and one file per family means */
+/* a consumer installing the scheduler cannot end up with half of it.    */
+/* ==================================================================== */
+
+.zb-dt-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr));
+  gap: 0.25rem;
+}
+
+.zb-dt-slotgroup + .zb-dt-slotgroup {
+  margin-block-start: 0.75rem;
+}
+
+.zb-dt-slotgroup__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block-end: 0.5rem;
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--zb-datetime-weekday-fg, #64748b);
+}
+
+.zb-dt-slotgroup__rule {
+  flex: 1;
+  block-size: 1px;
+  background: var(--zb-border, #e2e8f0);
+}
+
+.zb-dt-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-block-size: var(--zb-datetime-target, 2.75rem);
+  padding-inline: 0.25rem;
+  border: 1px solid var(--zb-datetime-chip-border, #e2e8f0);
+  border-radius: var(--zb-field-radius, 0.375rem);
+  background: var(--zb-datetime-chip-bg, #fff);
+  color: var(--zb-datetime-cell-fg, inherit);
+  font: inherit;
+  font-size: var(--zb-text-sm, 0.875rem);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--zb-duration-fast, 90ms) var(--zb-ease, ease),
+    border-color var(--zb-duration-fast, 90ms) var(--zb-ease, ease),
+    color var(--zb-duration-fast, 90ms) var(--zb-ease, ease);
+}
+
+.zb-dt-slot:hover {
+  border-color: var(--zb-accent-border, #93c5fd);
+  background: var(--zb-datetime-cell-range-bg, #dbeafe);
+}
+
+.zb-dt-slot:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--zb-surface, #fff),
+    0 0 0 4px var(--zb-focus-ring, rgb(37 99 235 / 0.35));
+  z-index: 1;
+}
+
+.zb-dt-slot--selected {
+  background: var(--zb-datetime-cell-selected-bg, #2563eb);
+  border-color: transparent;
+  color: var(--zb-datetime-cell-selected-fg, #fff);
+  font-weight: 500;
+}
+
+/*
+ * Three reasons a slot cannot be taken, one muted treatment, and the reason
+ * itself in the accessible name and the tooltip. Four separate greys would be
+ * four things to learn and still illegible to a reader who cannot separate
+ * them; the line-through is the channel that survives.
+ */
+.zb-dt-slot--blocked {
+  border-color: transparent;
+  background: var(--zb-bg-muted, #f1f5f9);
+  color: var(--zb-datetime-cell-muted-fg, #64748b);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  cursor: not-allowed;
+}
+
+/*
+ * Held is not booked. Somebody else's reservation expires, and a grid that
+ * renders the two identically tells a user to give up on a time that will be
+ * free in four minutes.
+ */
+.zb-dt-slot--held {
+  border-color: var(--zb-status-high-border, #fcd34d);
+  background: var(--zb-status-high-bg, #fffbeb);
+  color: var(--zb-status-high, #b45309);
+}
+
+.zb-dt-slot--held::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 0.1875rem;
+  inset-inline-end: 0.1875rem;
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.zb-dt-slot__sub {
+  position: absolute;
+  inset-block-end: 0.125rem;
+  font-size: 0.5625rem;
+  opacity: 0.75;
+}
+
+/* ---- the week strip above the grid --------------------------------- */
+
+.zb-dt-daystrip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.25rem;
+}
+
+.zb-dt-day {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 0.25rem 2px 0.375rem;
+  min-block-size: var(--zb-datetime-target, 2.75rem);
+  border: 1px solid var(--zb-border, #e2e8f0);
+  border-radius: var(--zb-field-radius, 0.375rem);
+  background: var(--zb-surface, #fff);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    background-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease);
+}
+
+.zb-dt-day:hover {
+  border-color: var(--zb-border-strong, #64748b);
+}
+
+.zb-dt-day:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--zb-surface, #fff),
+    0 0 0 4px var(--zb-focus-ring, rgb(37 99 235 / 0.35));
+}
+
+.zb-dt-day--selected {
+  border-color: var(--zb-datetime-cell-selected-bg, #2563eb);
+  background: var(--zb-datetime-cell-range-bg, #dbeafe);
+}
+
+.zb-dt-day--empty {
+  background: var(--zb-bg-muted, #f1f5f9);
+  border-color: transparent;
+  cursor: not-allowed;
+}
+
+.zb-dt-day__weekday {
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--zb-datetime-weekday-fg, #64748b);
+}
+
+.zb-dt-day__date {
+  font-size: var(--zb-text-lg, 1.125rem);
+  font-weight: 600;
+  color: var(--zb-datetime-cell-fg, inherit);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.zb-dt-day__count {
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  color: var(--zb-status-normal, #15803d);
+  font-variant-numeric: tabular-nums;
+}
+
+.zb-dt-day--empty .zb-dt-day__count,
+.zb-dt-day--empty .zb-dt-day__date {
+  color: var(--zb-datetime-cell-muted-fg, #64748b);
+}
+
+/* ---- staleness ------------------------------------------------------ */
+
+.zb-dt-asof {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--zb-text-xs, 0.75rem);
+  color: var(--zb-text-muted, #64748b);
+}
+
+/*
+ * Stale is a designed state. The slots stay visible and dimmed with an
+ * explicit age, because clearing the grid on a refresh throws away a
+ * selection the user was in the middle of making.
+ */
+.zb-dt-slots--stale {
+  opacity: 0.55;
+}
+
+/* ---- recurrence ----------------------------------------------------- */
+
+.zb-dt-weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.zb-dt-weekdays button {
+  inline-size: var(--zb-datetime-target, 2.75rem);
+  min-inline-size: 2rem;
+  block-size: 2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--zb-datetime-chip-border, #e2e8f0);
+  border-radius: var(--zb-radius-full, 999px);
+  background: var(--zb-datetime-chip-bg, #fff);
+  color: var(--zb-datetime-chip-fg, #64748b);
+  font: inherit;
+  font-size: var(--zb-text-xs, 0.75rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    border-color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease),
+    color var(--zb-datetime-duration, 150ms) var(--zb-ease, ease);
+}
+
+.zb-dt-weekdays button:hover {
+  border-color: var(--zb-border-strong, #64748b);
+  color: var(--zb-text, inherit);
+}
+
+.zb-dt-weekdays button[aria-pressed="true"] {
+  background: var(--zb-datetime-chip-on-bg, #2563eb);
+  border-color: transparent;
+  color: var(--zb-datetime-chip-on-fg, #fff);
+}
+
+.zb-dt-weekdays button:focus-visible {
+  outline: 2px solid var(--zb-field-border-focus, #2563eb);
+  outline-offset: 1px;
+}
+
+/*
+ * The plain-language echo of the rule.
+ *
+ * It is the only part of a recurrence builder most users read, so it is
+ * rendered as content rather than as a hint, and it is what the live region
+ * announces when the rule changes.
+ */
+.zb-dt-summary {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--zb-accent-border, #93c5fd);
+  border-radius: var(--zb-radius, 0.5rem);
+  background: var(--zb-accent-subtle, #eff6ff);
+  color: var(--zb-text, inherit);
+  font-size: var(--zb-datetime-font, var(--zb-text-sm, 0.875rem));
+  line-height: 1.5;
+}
+
+.zb-dt-summary b {
+  font-weight: 600;
+}
+
+.zb-dt-summary code {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+  margin-block-start: 0.25rem;
+  font-family: var(--zb-font-mono, monospace);
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  color: var(--zb-text-muted, #64748b);
+  scrollbar-width: thin;
+}
+
+/* ---- the series list ------------------------------------------------ */
+
+.zb-dt-series {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--zb-border, #e2e8f0);
+  border-radius: var(--zb-radius, 0.5rem);
+  background: var(--zb-border, #e2e8f0);
+  overflow: clip;
+}
+
+.zb-dt-series > li {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  min-block-size: var(--zb-datetime-target, 2.75rem);
+  background: var(--zb-surface, #fff);
+  font-size: var(--zb-text-sm, 0.875rem);
+}
+
+.zb-dt-series__n {
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  color: var(--zb-text-muted, #64748b);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.zb-dt-series__when {
+  font-variant-numeric: tabular-nums;
+  color: var(--zb-datetime-cell-fg, inherit);
+  min-inline-size: 0;
+}
+
+.zb-dt-series__why {
+  display: block;
+  font-size: var(--zb-text-xs, 0.75rem);
+  margin-block-start: 2px;
+}
+
+/* A conflict is a legal value colliding with other state, so it is a rail
+   and a tint rather than a hard error — and it never blocks on its own. */
+.zb-dt-series > li[data-zb-occurrence="conflict"] {
+  background: var(--zb-status-critical-bg, #fef2f2);
+  box-shadow: inset 2px 0 0 0 var(--zb-status-critical, #b91c1c);
+}
+
+.zb-dt-series > li[data-zb-occurrence="conflict"] .zb-dt-series__why {
+  color: var(--zb-status-critical, #b91c1c);
+}
+
+.zb-dt-series > li[data-zb-occurrence="excluded"] {
+  background: var(--zb-bg-muted, #f1f5f9);
+}
+
+.zb-dt-series > li[data-zb-occurrence="excluded"] .zb-dt-series__when {
+  color: var(--zb-datetime-cell-muted-fg, #64748b);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.zb-dt-series > li[data-zb-occurrence="moved"] {
+  background: var(--zb-status-normal-bg, #f0fdf4);
+  box-shadow: inset 2px 0 0 0 var(--zb-status-normal, #15803d);
+}
+
+/* ---- the count that is the feature ---------------------------------- */
+
+.zb-dt-tally {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--zb-border, #e2e8f0);
+  border-radius: var(--zb-radius, 0.5rem);
+  background: var(--zb-border, #e2e8f0);
+  overflow: clip;
+}
+
+.zb-dt-tally > div {
+  padding: 0.5rem 0.625rem;
+  background: var(--zb-surface, #fff);
+}
+
+.zb-dt-tally dt {
+  font-size: var(--zb-text-2xs, 0.6875rem);
+  color: var(--zb-text-muted, #64748b);
+  margin-block-start: 0.25rem;
+}
+
+.zb-dt-tally dd {
+  margin: 0;
+  font-size: var(--zb-text-xl, 1.25rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--zb-text, inherit);
+  font-variant-numeric: tabular-nums;
+}
+
+.zb-dt-tally dd[data-zb-tally="conflicts"] {
+  color: var(--zb-status-critical, #b91c1c);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zb-dt-slot,
+  .zb-dt-day,
+  .zb-dt-weekdays button {
+    transition-duration: 1ms;
+  }
+}
+
+@media (forced-colors: active) {
+  .zb-dt-slot--selected,
+  .zb-dt-day--selected,
+  .zb-dt-weekdays button[aria-pressed="true"] {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+  .zb-dt-series > li[data-zb-occurrence="conflict"] {
+    box-shadow: inset 2px 0 0 0 CanvasText;
+  }
+}
